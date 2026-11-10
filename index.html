@@ -185,6 +185,24 @@ figure.qimg figcaption{font-size:12.5px;color:var(--muted)}
 .perf-pct{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-top:3px;text-align:right}
 .perf-note{font-size:13px;color:var(--muted);margin:0 0 14px}
 @media (max-width:520px){.perf-row{grid-template-columns:1fr 64px 84px;gap:8px;padding:9px 10px;font-size:13.5px}}
+.rep-q{margin-left:auto;font:inherit;font-family:var(--f-ui);font-size:12.5px;background:none;border:0;padding:2px 0;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.rep-q:hover{color:var(--accent)}
+.rep-q .rep-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--mid);margin-right:5px;vertical-align:1px}
+.rep-form{background:var(--accent-soft);border:1px solid var(--line);border-radius:6px;padding:12px;margin:0 0 14px;display:flex;flex-direction:column;gap:8px;font-family:var(--f-ui);font-size:14px}
+.rep-form[hidden]{display:none}
+.rep-form .rep-t{font-weight:600}
+.rep-form select,.rep-form textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;box-sizing:border-box}
+.rep-form textarea{min-height:84px;resize:vertical}
+.rep-form .rep-act{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rep-n{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--mid);color:#fff;font-size:11.5px;line-height:18px;text-align:center;margin-left:4px}
+.rep-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.rep-item{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:10px;font-family:var(--f-ui);font-size:14px}
+.rep-item .rep-meta{font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.rep-item .rep-meta b{color:var(--ink)}
+.rep-item .rep-trecho{font-size:13px;color:var(--muted);border-left:3px solid var(--line);padding-left:8px;margin:6px 0}
+.rep-item .rep-txt{white-space:pre-wrap;margin:6px 0 10px}
+.rep-item.done{opacity:.7}
+.rep-item .rep-act{display:flex;flex-wrap:wrap;gap:8px}
 sub,sup{font-size:.72em}
 @media (max-width:520px){.pager .lbl{display:none}.q{padding:18px 12px 14px}.stem{font-size:16px}.opt{font-size:15px;grid-template-columns:26px 1fr;gap:8px;padding:9px 10px}.orow{grid-template-columns:1fr 36px}.flabel{min-width:100%}}
 @media (prefers-reduced-motion:no-preference){.feedback{animation:fade .18s ease-out}@keyframes fade{from{opacity:.4}to{opacity:1}}}
@@ -230,6 +248,7 @@ body.noscroll{overflow:hidden}
       <span>Aproveitamento <b id="s-pct">—</b></span>
       <span id="s-lvl"></span>
       <button class="btn perf-btn" id="perf-btn" type="button">Desempenho por área</button>
+      <button class="btn" id="rep-btn" type="button" style="font-family:var(--f-ui);padding:6px 10px">Reportes</button>
     </div>
     <div class="cont" id="cont"></div>
     <div class="frow" role="group" aria-label="Área" id="f-area"><span class="flabel">Área</span></div>
@@ -330,7 +349,11 @@ function renderFilters(){
 
 function qHTML(i){
   const q = Q[i], n = String(i+1).padStart(3,"0");
-  let h = `<div class="q-head"><span class="q-num">Questão ${n}</span><span class="lvl d${q.d}" id="lv${i}" hidden>${LV[q.d]}</span><span class="src" id="sr${i}" hidden>${q.src}</span></div>`;
+  let h = `<div class="q-head"><span class="q-num">Questão ${n}</span><span class="lvl d${q.d}" id="lv${i}" hidden>${LV[q.d]}</span><span class="src" id="sr${i}" hidden>${q.src}</span><button class="rep-q" id="rq${i}" data-q="${i}" type="button" title="Reportar um erro nesta questão">${repOpenFor(q.id)?'<span class="rep-dot" title="Há reporte aberto"></span>':""}Reportar erro</button></div>`;
+  h += `<form class="rep-form" id="rf${i}" data-q="${i}" hidden><div class="rep-t">Reportar erro na questão ${n}</div>
+    <select name="tipo" aria-label="Tipo de problema"><option>Enunciado ou alternativas</option><option>Gabarito</option><option>Comentário ou explicação</option><option>Resumo ou link do resumo</option><option>Imagem</option><option>Tags ou fonte</option><option>Outro</option></select>
+    <textarea name="texto" required placeholder="O que está errado ou confuso? (ex.: o enunciado cita uma tabela do livro que não aparece aqui)"></textarea>
+    <div class="rep-act"><button class="btn primary rep-send" type="submit">Enviar reporte</button><button class="btn ghost rep-cancel" type="button">Cancelar</button><span class="hint rep-msg"></span></div></form>`;
   h += `<div class="qtags" id="tg${i}" hidden>` + q.g.map(t=>`<button class="qtag" data-t="${esc(t)}" title="Filtrar por este subtema">${t}</button>`).join("") + `</div>`;
   h += `<p class="stem">${q.s}</p>`;
   if (q.img) h += `<figure class="qimg"><button class="zoomimg" data-src="${q.img}" aria-label="Ampliar imagem"><img src="${q.img}" alt="${esc(q.ic||"Imagem da questão")}" loading="lazy"></button>${q.ic?`<figcaption>${q.ic} Toque para ampliar.</figcaption>`:""}</figure>`;
@@ -470,6 +493,10 @@ function openLB(src){
 }
 
 document.getElementById("list").addEventListener("click", e=>{
+  const rq = e.target.closest(".rep-q");
+  if (rq) { const f = document.getElementById("rf"+rq.dataset.q); f.hidden = !f.hidden; if (!f.hidden) { f.querySelector(".rep-msg").textContent = ""; f.querySelector("textarea").focus(); } return; }
+  const rf = e.target.closest(".rep-form");
+  if (rf) { if (e.target.closest(".rep-cancel")) rf.hidden = true; return; }
   const o = e.target.closest(".opt"), x = e.target.closest(".strike"), go = e.target.closest(".btn.primary:not(.next-open)"), sk = e.target.closest(".btn.ghost"),
         nx = e.target.closest(".next-open"), tg = e.target.closest(".qtag"), zi = e.target.closest(".zoomimg");
   if (zi) { openLB(zi.dataset.src); return; }
@@ -530,6 +557,79 @@ function openPerf(){
 document.getElementById("perf-btn").addEventListener("click", openPerf);
 document.addEventListener("keydown", e=>{ if (e.key==="Escape") { const o = document.querySelector(".perf"); if (o) { o.remove(); document.body.classList.remove("noscroll"); } } });
 
+/* ---------- Reportar erro ----------
+   No app (login), window.REPORTES vem do shell e grava no Supabase (tabela "reportes"),
+   visível para os dois usuários. Fora do app, os reportes ficam neste navegador. */
+const REP = window.REPORTES || (function(){
+  const K = "banco-tea-reportes";
+  const all = ()=>{ try { return JSON.parse(localStorage.getItem(K) || "[]"); } catch(e) { return []; } };
+  const put = a=>{ try { localStorage.setItem(K, JSON.stringify(a)); } catch(e) {} };
+  return { local: true,
+    async add(r){ const a = all(); a.push(Object.assign({id: Date.now(), criado: new Date().toISOString(), status: "aberto", autor: "este navegador"}, r)); put(a); return {ok: true}; },
+    async list(){ return all().slice().reverse(); },
+    async update(id, patch){ put(all().map(r=>r.id===id ? Object.assign(r, patch) : r)); } };
+})();
+let REPS = [];
+function repOpenFor(qid){ return REPS.some(r=>r.qid===qid && r.status!=="resolvido"); }
+function paintRepBtn(){ const b = document.getElementById("rep-btn"); if (!b) return; const n = REPS.filter(r=>r.status!=="resolvido").length; b.innerHTML = "Reportes" + (n ? `<span class="rep-n">${n}</span>` : ""); }
+async function loadReps(){ try { REPS = (await REP.list()) || []; } catch(e) { REPS = []; } paintRepBtn();
+  document.querySelectorAll(".rep-q").forEach(b=>{ const q = Q[+b.dataset.q]; const has = repOpenFor(q.id); const dot = b.querySelector(".rep-dot"); if (has && !dot) b.insertAdjacentHTML("afterbegin",'<span class="rep-dot" title="Há reporte aberto"></span>'); if (!has && dot) dot.remove(); }); }
+const plain = h => { const d = document.createElement("div"); d.innerHTML = h; return (d.textContent || "").replace(/\s+/g," ").trim(); };
+const escH = t => String(t==null?"":t).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+document.getElementById("list").addEventListener("submit", async e=>{
+  const f = e.target.closest(".rep-form"); if (!f) return; e.preventDefault();
+  const i = +f.dataset.q, q = Q[i], txt = f.texto.value.trim(), msg = f.querySelector(".rep-msg"), btn = f.querySelector(".rep-send");
+  if (!txt) { msg.textContent = "Descreva o problema."; return; }
+  btn.disabled = true; msg.textContent = "Enviando…";
+  let r; try { r = await REP.add({qid: q.id, num: i+1, tipo: f.tipo.value, texto: txt, trecho: plain(q.s).slice(0,160)}); } catch(err) { r = {ok:false}; }
+  btn.disabled = false;
+  if (r && r.ok) { msg.textContent = "Reporte enviado. Obrigado!"; f.texto.value = ""; setTimeout(()=>{ f.hidden = true; }, 1400); }
+  else if (r && r.pend) { msg.textContent = "Salvo neste aparelho; será enviado assim que possível."; f.texto.value = ""; setTimeout(()=>{ f.hidden = true; }, 2200); }
+  else { msg.textContent = "Não foi possível enviar agora. Tente de novo."; return; }
+  loadReps();
+});
+let repTab = "aberto";
+function openReps(){
+  const old = document.querySelector(".perf"); if (old) old.remove();
+  const o = document.createElement("div"); o.className = "perf"; o.setAttribute("role","dialog"); o.setAttribute("aria-label","Reportes de erro");
+  const draw = ()=>{
+    const list = REPS.filter(r=>repTab==="todos" || (repTab==="resolvido" ? r.status==="resolvido" : r.status!=="resolvido"));
+    const nA = REPS.filter(r=>r.status!=="resolvido").length, nR = REPS.length - nA;
+    let h = `<div class="in"><div class="perf-h"><h2>Reportes de erro</h2><button class="btn" id="perf-x">Fechar ✕</button></div>
+      <p class="perf-note">Erros apontados ${REP.local ? "neste navegador" : "por Getúlio e Bruno"}. Use “Ir para a questão” para conferir e “Marcar como resolvido” depois de corrigir. “Copiar abertos” gera um texto para colar numa conversa com o Claude.</p>
+      <div class="rep-tabs"><button class="chip" data-t="aberto" aria-pressed="${repTab==="aberto"}">Abertos <span class="src">${nA}</span></button><button class="chip" data-t="resolvido" aria-pressed="${repTab==="resolvido"}">Resolvidos <span class="src">${nR}</span></button><button class="chip" data-t="todos" aria-pressed="${repTab==="todos"}">Todos</button><button class="btn" id="rep-copy" type="button" style="margin-left:auto">Copiar abertos</button><span class="hint" id="rep-cm"></span></div>`;
+    if (!list.length) h += `<div class="empty">Nenhum reporte aqui.</div>`;
+    list.forEach(r=>{ const qi = IDX[r.qid]; const dt = r.criado ? new Date(r.criado).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}) : "";
+      h += `<div class="rep-item${r.status==="resolvido"?" done":""}"><div class="rep-meta"><b>Questão ${String((qi!=null?qi+1:r.num)||"?").padStart(3,"0")}</b> · ${escH(r.qid)} · ${escH(r.tipo)} · ${escH(r.autor||"")} · ${dt}${r.pend?" · envio pendente":""}${r.status==="resolvido"?" · resolvido":""}</div>
+        ${r.trecho?`<div class="rep-trecho">${escH(r.trecho)}…</div>`:""}<div class="rep-txt">${escH(r.texto)}</div>${r.resposta?`<div class="rep-trecho"><b>Resposta:</b> ${escH(r.resposta)}</div>`:""}
+        <div class="rep-act">${qi!=null?`<button class="btn" data-go="${qi}">Ir para a questão</button>`:""}${r.pend?"":`<button class="btn ghost" data-st="${escH(r.id)}">${r.status==="resolvido"?"Reabrir":"Marcar como resolvido"}</button>`}</div></div>`; });
+    o.innerHTML = h + `</div>`;
+  };
+  o.addEventListener("click", async e=>{
+    const close = ()=>{ o.remove(); document.body.classList.remove("noscroll"); };
+    if (e.target.closest("#perf-x")) { close(); return; }
+    const t = e.target.closest("[data-t]"); if (t) { repTab = t.dataset.t; draw(); return; }
+    const g = e.target.closest("[data-go]"); if (g) { close(); goTo(+g.dataset.go); return; }
+    if (e.target.closest("#rep-copy")) {
+      const ab = REPS.filter(r=>r.status!=="resolvido");
+      const txt = "Reportes abertos no banco de questões (" + ab.length + "):\n\n" + ab.map(r=>`- ${r.qid} (questão ${IDX[r.qid]!=null?IDX[r.qid]+1:r.num}) · ${r.tipo} · ${r.autor||""}: ${r.texto}\n  Trecho: ${r.trecho||""}`).join("\n");
+      let ok = false; try { await navigator.clipboard.writeText(txt); ok = true; } catch(_) {}
+      o.querySelector("#rep-cm").textContent = ok ? "Copiado." : "Não deu para copiar neste navegador.";
+      return; }
+    const s = e.target.closest("[data-st]"); if (s) {
+      const r = REPS.find(x=>String(x.id)===s.dataset.st); if (!r) return;
+      const novo = r.status==="resolvido" ? "aberto" : "resolvido";
+      s.disabled = true;
+      try { await REP.update(r.id, {status: novo, resolvido_em: novo==="resolvido" ? new Date().toISOString() : null}); r.status = novo; } catch(err) { s.disabled = false; return; }
+      paintRepBtn(); draw(); loadReps();
+    }
+  });
+  draw(); document.body.appendChild(o); document.body.classList.add("noscroll"); o.querySelector("#perf-x").focus();
+  loadReps().then(()=>{ if (o.isConnected) draw(); });
+}
+document.getElementById("rep-btn").addEventListener("click", openReps);
+setTimeout(loadReps, 0);
+
 let armed = false;
 document.getElementById("btn-reset").addEventListener("click", ()=>{
   const m = document.getElementById("reset-confirm");
@@ -562,7 +662,8 @@ function setTheme(t, save){
 const RZLIST = [
   ["via-aerea-adulto","Miller's Anesthesia, 10ª ed.",40,"Manejo da via aérea no adulto"],
   ["anestesia-neuraxial","Miller's Anesthesia, 10ª ed.",41,"Raquianestesia, peridural e caudal"],
-  ["anestesia-transplantes","Miller's Anesthesia, 10ª ed.",56,"Transplantes: captação, rim, pâncreas e fígado (caps. 56–57)"],
+  ["anestesia-transplantes","Miller's Anesthesia, 10ª ed.",56,"Transplantes de órgãos (caps. 56–57 e Bases SBA)"],
+  ["anestesia-ambulatorial","Miller's Anesthesia, 10ª ed.",68,"Anestesia ambulatorial e fora do centro cirúrgico (cap. 68 e Bases SBA)"],
   ["anestesia-pediatrica","Miller's Anesthesia, 10ª ed.",72,"Anestesia pediátrica"],
   ["anestesia-regional-pediatrica","Miller's Anesthesia, 10ª ed.",74,"Anestesia regional pediátrica"],
   ["terapia-intensiva-pediatrica","Miller's Anesthesia, 10ª ed.",75,"Terapia intensiva pediátrica e neonatal"],
@@ -702,7 +803,10 @@ async function supabaseAPI(){
       return out;
     },
     async getProg(uid){ const {data, error} = await sb.from("progresso").select("estado,atualizado").eq("user_id", uid).maybeSingle(); if (error) throw error; return data; },
-    async setProg(uid, estado){ const {data, error} = await sb.from("progresso").upsert({user_id: uid, estado}).select("atualizado").single(); if (error) throw error; return data.atualizado; }
+    async setProg(uid, estado){ const {data, error} = await sb.from("progresso").upsert({user_id: uid, estado}).select("atualizado").single(); if (error) throw error; return data.atualizado; },
+    async repAdd(r){ const {error} = await sb.from("reportes").insert(r); if (error) throw error; },
+    async repList(){ const {data, error} = await sb.from("reportes").select("*").order("criado", {ascending: false}).limit(1000); if (error) throw error; return data || []; },
+    async repUpd(id, patch){ const {error} = await sb.from("reportes").update(patch).eq("id", id); if (error) throw error; }
   };
 }
 
@@ -717,7 +821,10 @@ function mockAPI(){
     async text(path){ const r = await fetch("conteudo/" + path); if (!r.ok) throw new Error(r.status); return r.text(); },
     async sign(paths){ const o = {}; paths.forEach(p => o[p] = new URL("conteudo/" + p, location.href).href); return o; },
     async getProg(uid){ return ls("mock-db-" + uid); },
-    async setProg(uid, estado){ const at = new Date().toISOString() + Math.random().toString(36).slice(2, 6); ls("mock-db-" + uid, {estado, atualizado: at}); return at; }
+    async setProg(uid, estado){ const at = new Date().toISOString() + Math.random().toString(36).slice(2, 6); ls("mock-db-" + uid, {estado, atualizado: at}); return at; },
+    async repAdd(r){ if (CFG.mockSemTabela) throw new Error("relation reportes does not exist"); const a = ls("mock-reportes") || []; a.push(Object.assign({id: a.length + 1, criado: new Date().toISOString(), status: "aberto"}, r)); ls("mock-reportes", a); },
+    async repList(){ if (CFG.mockSemTabela) throw new Error("relation reportes does not exist"); return (ls("mock-reportes") || []).slice().reverse(); },
+    async repUpd(id, patch){ ls("mock-reportes", (ls("mock-reportes") || []).map(r => r.id === id ? Object.assign(r, patch) : r)); }
   };
 }
 
@@ -801,6 +908,27 @@ function makeSync(uid){
   return S;
 }
 
+/* ---------- reportes de erro (tabela "reportes"; se falhar, guarda neste aparelho e reenvia depois) ---------- */
+function makeReportes(u, autor){
+  const FK = "banco-rep-fila-" + u.id;
+  const fila = () => { try { return JSON.parse(localStorage.getItem(FK) || "[]"); } catch(e) { return []; } };
+  const putF = a => { try { localStorage.setItem(FK, JSON.stringify(a)); } catch(e) {} };
+  async function flush(){ const f = fila(); if (!f.length) return; const rest = []; for (const r of f) { try { const x = Object.assign({}, r); delete x.criado_local; await API.repAdd(x); } catch(e) { rest.push(r); } } putF(rest); }
+  return {
+    async add(r){
+      const row = {qid: r.qid, num: r.num, tipo: r.tipo, texto: r.texto, trecho: r.trecho, autor};
+      try { await API.repAdd(row); flush().catch(() => {}); return {ok: true}; }
+      catch(e) { putF(fila().concat([Object.assign({criado_local: new Date().toISOString()}, row)])); return {ok: false, pend: true}; }
+    },
+    async list(){
+      try { await flush(); } catch(e) {}
+      let rows = []; try { rows = await API.repList(); } catch(e) {}
+      return rows.concat(fila().map((r, k) => Object.assign({id: "fila-" + k, status: "aberto", pend: true, criado: r.criado_local}, r)));
+    },
+    async update(id, patch){ if (String(id).startsWith("fila-")) return; await API.repUpd(id, patch); }
+  };
+}
+
 /* ---------- entrada ---------- */
 function showLogin(msg){
   $("#splash").hidden = true; $("#lform").hidden = false; $("#lerr").textContent = msg || "";
@@ -829,6 +957,7 @@ async function enter(u){
   acct.querySelector(".who").textContent = NOMES[user] || nice(u.email);
   setStatus(sync.dirty ? "saving" : "ok");
   $("#sair").onclick = async () => { await sync.flush(); await API.signOut(); location.reload(); };
+  window.REPORTES = makeReportes(u, NOMES[user] || nice(u.email));
   BOOT(Q, u.id, sync);
 }
 
