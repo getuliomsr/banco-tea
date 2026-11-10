@@ -150,6 +150,7 @@ details.sheet summary{cursor:pointer;font-size:13px;color:var(--accent);font-wei
 .cont{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 .cont .hint{font-size:13px}
 .qtags{display:flex;flex-wrap:wrap;gap:4px 6px;margin:-4px 0 12px}
+.qtags[hidden]{display:none}
 .qtag{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:2px 6px;background:transparent;cursor:pointer;font-family:var(--f-ui)}
 .qtag:hover{border-color:var(--accent);color:var(--accent)}
 .src{font-size:12px;color:var(--muted)}
@@ -167,6 +168,23 @@ figure.qimg figcaption{font-size:12.5px;color:var(--muted)}
 .foot{color:var(--muted);font-size:13px;margin-top:28px;border-top:1px solid var(--line);padding-top:14px}
 .foot p{margin:0 0 6px}
 .foot b{font-weight:500;color:var(--ink)}
+.perf-btn{margin-left:auto;font-family:var(--f-ui);padding:6px 10px}
+.perf{position:fixed;inset:0;z-index:47;background:var(--bg);overflow:auto;padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+.perf .in{max-width:760px;margin:0 auto}
+.perf-h{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.perf-h h2{font-family:var(--f-text);font-size:22px;margin:0;flex:1}
+.perf-me{background:var(--surface);border:1px solid var(--line);border-radius:6px;margin-bottom:14px;overflow:hidden}
+.perf-row{display:grid;grid-template-columns:1fr 92px 120px;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);font-size:14px;cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left;color:var(--ink);font-family:var(--f-ui)}
+.perf-row:hover{background:var(--accent-soft)}
+.perf-row.head{border-top:0;background:var(--accent-soft);font-weight:600;cursor:default}
+.perf-row .nm{min-width:0}
+.perf-row .ct{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.perf-bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;position:relative}
+.perf-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ok)}
+.perf-bar.low i{background:var(--bad)} .perf-bar.mid i{background:var(--mid)}
+.perf-pct{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-top:3px;text-align:right}
+.perf-note{font-size:13px;color:var(--muted);margin:0 0 14px}
+@media (max-width:520px){.perf-row{grid-template-columns:1fr 64px 84px;gap:8px;padding:9px 10px;font-size:13.5px}}
 sub,sup{font-size:.72em}
 @media (max-width:520px){.pager .lbl{display:none}.q{padding:18px 12px 14px}.stem{font-size:16px}.opt{font-size:15px;grid-template-columns:26px 1fr;gap:8px;padding:9px 10px}.orow{grid-template-columns:1fr 36px}.flabel{min-width:100%}}
 @media (prefers-reduced-motion:no-preference){.feedback{animation:fade .18s ease-out}@keyframes fade{from{opacity:.4}to{opacity:1}}}
@@ -211,6 +229,7 @@ body.noscroll{overflow:hidden}
       <span>Acertos <b id="s-ok">0</b></span>
       <span>Aproveitamento <b id="s-pct">—</b></span>
       <span id="s-lvl"></span>
+      <button class="btn perf-btn" id="perf-btn" type="button">Desempenho por área</button>
     </div>
     <div class="cont" id="cont"></div>
     <div class="frow" role="group" aria-label="Área" id="f-area"><span class="flabel">Área</span></div>
@@ -294,7 +313,8 @@ function filtered(){
 
 function renderFilters(){
   const areas = {}; Q.forEach(q=>{ new Set(q.g.map(areaOf)).forEach(a=>areas[a]=(areas[a]||0)+1); });
-  const order = Object.keys(areas).sort((a,b)=>areas[b]-areas[a]||a.localeCompare(b));
+  const order = Object.keys(areas).sort((a,b)=>a.localeCompare(b,"pt",{numeric:true}));
+  if (F.area !== "all" && !areas[F.area]) { F.area = "all"; F.sub = "all"; saveF(); }
   const fa = document.getElementById("f-area");
   fa.innerHTML = `<span class="flabel">Área</span><button class="chip" data-g="area" data-v="all">Todas</button>` + order.map(a=>`<button class="chip" data-g="area" data-v="${esc(a)}">${a} <span class="src">${areas[a]}</span></button>`).join("");
   const fs = document.getElementById("f-sub");
@@ -302,15 +322,16 @@ function renderFilters(){
   else {
     const subs = {}; Q.forEach(q=>q.g.forEach(t=>{ if (areaOf(t)===F.area) subs[subOf(t)]=(subs[subOf(t)]||0)+1; }));
     fs.hidden = false;
-    fs.innerHTML = `<span class="flabel">Subtema</span><button class="chip" data-g="sub" data-v="all">Todos</button>` + Object.keys(subs).sort((a,b)=>subs[b]-subs[a]||a.localeCompare(b)).map(t=>`<button class="chip" data-g="sub" data-v="${esc(t)}">${t} <span class="src">${subs[t]}</span></button>`).join("");
+    fs.innerHTML = `<span class="flabel">Subtema</span><button class="chip" data-g="sub" data-v="all">Todos</button>` + Object.keys(subs).sort((a,b)=>a.localeCompare(b,"pt",{numeric:true})).map(t=>`<button class="chip" data-g="sub" data-v="${esc(t)}">${t.replace(/^Ponto /,"")} <span class="src">${subs[t]}</span></button>`).join("");
+    if (F.sub !== "all" && !subs[F.sub]) { F.sub = "all"; saveF(); }
   }
   document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed", String(c.dataset.g==="pp" ? String(PAGE)===c.dataset.v : F[c.dataset.g]===c.dataset.v)));
 }
 
 function qHTML(i){
   const q = Q[i], n = String(i+1).padStart(3,"0");
-  let h = `<div class="q-head"><span class="q-num">Questão ${n}</span><span class="lvl d${q.d}" id="lv${i}" hidden>${LV[q.d]}</span><span class="src">${q.src}</span></div>`;
-  h += `<div class="qtags">` + q.g.map(t=>`<button class="qtag" data-t="${esc(t)}" title="Filtrar por este subtema">${t}</button>`).join("") + `</div>`;
+  let h = `<div class="q-head"><span class="q-num">Questão ${n}</span><span class="lvl d${q.d}" id="lv${i}" hidden>${LV[q.d]}</span><span class="src" id="sr${i}" hidden>${q.src}</span></div>`;
+  h += `<div class="qtags" id="tg${i}" hidden>` + q.g.map(t=>`<button class="qtag" data-t="${esc(t)}" title="Filtrar por este subtema">${t}</button>`).join("") + `</div>`;
   h += `<p class="stem">${q.s}</p>`;
   if (q.img) h += `<figure class="qimg"><button class="zoomimg" data-src="${q.img}" aria-label="Ampliar imagem"><img src="${q.img}" alt="${esc(q.ic||"Imagem da questão")}" loading="lazy"></button>${q.ic?`<figcaption>${q.ic} Toque para ampliar.</figcaption>`:""}</figure>`;
   if (q.i) h += `<ol class="items${q.corr?" corr":""}">` + q.i.map((it,k)=>`<li>${q.corr?"":`<span class="rn">${R[k]}.</span>`}<span>${it[0]}</span></li>`).join("") + `</ol>`;
@@ -323,6 +344,7 @@ function paint(i){
   const sec = document.getElementById("q"+i); if (!sec) return;
   const q = Q[i], s = rec(i), d = done(i), strikes = s.x || [];
   document.getElementById("lv"+i).hidden = !d;
+  document.getElementById("sr"+i).hidden = !d; document.getElementById("tg"+i).hidden = !d;
   q.o.forEach((o,k)=>{
     const b = document.getElementById(`o${i}-${k}`), x = document.getElementById(`x${i}-${k}`);
     b.className = "opt"; b.disabled = d; x.disabled = d;
@@ -482,6 +504,32 @@ document.querySelector(".panel").addEventListener("click", e=>{
   const b = e.target.closest("button[data-p]"); if (!b || b.disabled) return; const v = b.dataset.p;
   page = v === "first" ? 0 : v === "last" ? 1e9 : page + (+v); renderList(true);
 }));
+/* ---------- Desempenho por área (ME › ponto) ---------- */
+function openPerf(){
+  const agg = {};
+  Q.forEach((q,i)=>{ q.g.forEach(t=>{ const a = areaOf(t), s = subOf(t);
+    const A = agg[a] || (agg[a] = {n:0, r:0, ok:0, subs:{}, seen:new Set()});
+    if (!A.seen.has(i)) { A.seen.add(i); A.n++; if (answered(i)) { A.r++; if (rec(i).pick===q.a) A.ok++; } }
+    const S2 = A.subs[s] || (A.subs[s] = {n:0, r:0, ok:0}); S2.n++; if (answered(i)) { S2.r++; if (rec(i).pick===q.a) S2.ok++; } }); });
+  const bar = (r, ok) => { if (!r) return `<div class="perf-bar"></div><div class="perf-pct">—</div>`; const p = Math.round(100*ok/r);
+    return `<div class="perf-bar ${p<50?"low":p<70?"mid":""}"><i style="width:${p}%"></i></div><div class="perf-pct">${p}% (${ok}/${r})</div>`; };
+  let h = `<div class="in"><div class="perf-h"><h2>Desempenho por área</h2><button class="btn" id="perf-x">Fechar ✕</button></div>
+    <p class="perf-note">Por ano de especialização e ponto do programa da SBA. A coluna do meio mostra respondidas/total. Toque num ponto para filtrar as questões dele.</p>`;
+  Object.keys(agg).sort((a,b)=>a.localeCompare(b,"pt",{numeric:true})).forEach(a=>{ const A = agg[a];
+    h += `<div class="perf-me"><div class="perf-row head"><span class="nm">${a}</span><span class="ct">${A.r}/${A.n}</span><span>${bar(A.r,A.ok)}</span></div>`;
+    Object.keys(A.subs).sort((x,y)=>x.localeCompare(y,"pt",{numeric:true})).forEach(s=>{ const S2 = A.subs[s];
+      h += `<button class="perf-row" data-a="${esc(a)}" data-s="${esc(s)}"><span class="nm">${s}</span><span class="ct">${S2.r}/${S2.n}</span><span>${bar(S2.r,S2.ok)}</span></button>`; });
+    h += `</div>`; });
+  h += `</div>`;
+  const o = document.createElement("div"); o.className = "perf"; o.setAttribute("role","dialog"); o.setAttribute("aria-label","Desempenho por área"); o.innerHTML = h;
+  o.addEventListener("click", e=>{ if (e.target.closest("#perf-x")) { o.remove(); document.body.classList.remove("noscroll"); return; }
+    const r = e.target.closest(".perf-row[data-a]"); if (!r) return;
+    F.area = r.dataset.a; F.sub = r.dataset.s; F.st = "all"; F.lvl = "all"; saveF(); page = 0; o.remove(); document.body.classList.remove("noscroll"); renderList(true); });
+  document.body.appendChild(o); document.body.classList.add("noscroll"); o.querySelector("#perf-x").focus();
+}
+document.getElementById("perf-btn").addEventListener("click", openPerf);
+document.addEventListener("keydown", e=>{ if (e.key==="Escape") { const o = document.querySelector(".perf"); if (o) { o.remove(); document.body.classList.remove("noscroll"); } } });
+
 let armed = false;
 document.getElementById("btn-reset").addEventListener("click", ()=>{
   const m = document.getElementById("reset-confirm");
@@ -514,12 +562,13 @@ function setTheme(t, save){
 const RZLIST = [
   ["via-aerea-adulto","Miller's Anesthesia, 10ª ed.",40,"Manejo da via aérea no adulto"],
   ["anestesia-neuraxial","Miller's Anesthesia, 10ª ed.",41,"Raquianestesia, peridural e caudal"],
+  ["anestesia-transplantes","Miller's Anesthesia, 10ª ed.",56,"Transplantes: captação, rim, pâncreas e fígado (caps. 56–57)"],
   ["anestesia-pediatrica","Miller's Anesthesia, 10ª ed.",72,"Anestesia pediátrica"],
   ["anestesia-regional-pediatrica","Miller's Anesthesia, 10ª ed.",74,"Anestesia regional pediátrica"],
   ["terapia-intensiva-pediatrica","Miller's Anesthesia, 10ª ed.",75,"Terapia intensiva pediátrica e neonatal"],
   ["anestesia-bucomaxilofacial","Tratado de Anestesiologia SAESP",178,"Anestesia para cirurgia bucomaxilofacial"]
 ];
-const RESUMOS = {}; RZLIST.forEach(r=>RESUMOS[r[0]] = `${r[3]} (cap. ${r[2]})`);
+const RESUMOS = {}; RZLIST.forEach(r=>RESUMOS[r[0]] = /\(caps?\./.test(r[3]) ? r[3] : `${r[3]} (cap. ${r[2]})`);
 const RZ = {};
 function loadRZ(f){
   if (!RZ[f]) RZ[f] = window.APP.resumo(f)
