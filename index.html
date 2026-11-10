@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 </head>
 <body class="locked">
-<title>Banco de Questões TEA/TSA</title>
+<title>Banco de Questões em Anestesiologia</title>
 <script src="config.js"></script>
 <style>
 body.locked .wrap{display:none}
@@ -89,7 +89,9 @@ details.sheet summary{cursor:pointer;font-size:13px;color:var(--accent);font-wei
 
 .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 .pager .btn{white-space:nowrap}
-.pager span{text-align:center}
+.pager span{text-align:center;flex:1}
+.pager .pg{display:flex;gap:6px}
+.pp .chip{padding:6px 10px}
 .pager .btn[disabled]{opacity:.4;cursor:default}
 
 /* questão */
@@ -164,15 +166,22 @@ figure.qimg figcaption{font-size:12.5px;color:var(--muted)}
 .empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:6px}
 .foot{color:var(--muted);font-size:13px;margin-top:28px;border-top:1px solid var(--line);padding-top:14px}
 .foot p{margin:0 0 6px}
+.foot b{font-weight:500;color:var(--ink)}
 sub,sup{font-size:.72em}
-@media (max-width:520px){.q{padding:18px 12px 14px}.stem{font-size:16px}.opt{font-size:15px;grid-template-columns:26px 1fr;gap:8px;padding:9px 10px}.orow{grid-template-columns:1fr 36px}.flabel{min-width:100%}}
+@media (max-width:520px){.pager .lbl{display:none}.q{padding:18px 12px 14px}.stem{font-size:16px}.opt{font-size:15px;grid-template-columns:26px 1fr;gap:8px;padding:9px 10px}.orow{grid-template-columns:1fr 36px}.flabel{min-width:100%}}
 @media (prefers-reduced-motion:no-preference){.feedback{animation:fade .18s ease-out}@keyframes fade{from{opacity:.4}to{opacity:1}}}
 /* Resumos: link no comentário, gaveta com a seção e sobreposição com o resumo completo */
 .rs-box{margin-top:12px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:4px;padding:9px 12px;font-size:14px;background:var(--accent-soft)}
 .rs-box .rs-lab{font-weight:600;color:var(--accent);margin-right:4px}
 .rs-open{background:none;border:0;padding:0;font:inherit;color:var(--accent);text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:left}
-.rz-links{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 0;font-size:14px;color:var(--muted)}
-.rz-links .btn{padding:7px 11px}
+details.rz{font-family:var(--f-ui);margin:14px 0 0;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+details.rz summary{cursor:pointer;padding:10px 14px;font-size:14px;font-weight:500;color:var(--accent);list-style-position:inside}
+details.rz[open] summary{border-bottom:1px solid var(--line)}
+.rz-grid{display:grid;gap:2px;padding:6px}
+.rz-src{font-family:var(--f-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:8px 8px 2px}
+.rz-item{display:grid;grid-template-columns:4.6em 1fr;gap:10px;align-items:baseline;text-align:left;font:inherit;font-family:var(--f-ui);font-size:14.5px;color:var(--ink);background:none;border:0;border-radius:4px;padding:8px;cursor:pointer}
+.rz-item:hover{background:var(--accent-soft)}
+.rz-item .cap{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .drw-scrim{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:44}
 .drw{position:fixed;top:0;right:0;bottom:0;width:min(640px,100vw);background:var(--bg);z-index:45;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.25);border-left:1px solid var(--line)}
 .drw-h{display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;border-bottom:1px solid var(--line);background:var(--surface)}
@@ -190,11 +199,10 @@ body.noscroll{overflow:hidden}
 <div class="wrap">
   <header class="top">
     <button class="tbtn" id="theme-btn" type="button" aria-label="Alternar modo claro/escuro" title="Modo claro/escuro"></button>
-    <div class="eyebrow">Anestesiologia · estudo para TEA/TSA</div>
+    <div class="eyebrow">Estudo para TEA/TSA</div>
     <div class="acct" id="acct"></div>
-    <h1>Banco de Questões TEA/TSA</h1>
-    <p class="lede"><b id="n-total">—</b> questões inéditas, organizadas por área e subtema, com casos clínicos, questões conceituais e questões com imagem. Toque numa alternativa para marcá-la e depois em <b>Responder</b>. Use o botão ao lado de cada alternativa para riscar as que você já descartou. A dificuldade só aparece depois que você responde.</p>
-    <p class="rz-links" id="rz-links"><span>Resumos:</span></p>
+    <h1>Banco de Questões em Anestesiologia</h1>
+    <details class="rz" id="rz"><summary>Resumos <span class="src" id="rz-n"></span></summary><div class="rz-grid" id="rz-links"></div></details>
   </header>
 
   <section class="panel" aria-label="Progresso e filtros">
@@ -220,6 +228,12 @@ body.noscroll{overflow:hidden}
       <button class="chip" data-g="st" data-v="ok" id="fs-ok">Certas</button>
       <button class="chip" data-g="st" data-v="img" id="fs-img">Com imagem</button>
     </div>
+    <div class="frow pp" role="group" aria-label="Questões por página"><span class="flabel">Por página</span>
+      <button class="chip" data-g="pp" data-v="10">10</button>
+      <button class="chip" data-g="pp" data-v="20">20</button>
+      <button class="chip" data-g="pp" data-v="50">50</button>
+      <button class="chip" data-g="pp" data-v="100">100</button>
+    </div>
     <details class="sheet" id="sheet"><summary>Cartão-resposta</summary>
       <div class="grid" id="grid"></div>
       <div class="legend">Verde: acerto · vermelho: erro · tracejado: gabarito visto sem responder. Toque num número para ir à questão.</div>
@@ -235,16 +249,13 @@ body.noscroll{overflow:hidden}
     <span id="reset-confirm" class="hint" hidden>Toque de novo para confirmar.</span>
   </div>
 
-  <footer class="foot">
-    <p>Questões elaboradas a partir do Miller's Anesthesia, 10ª edição (até agora: caps. 40 Airway Management in the Adult, 41 Spinal, Epidural, and Caudal Anesthesia, 72 Pediatric Anesthesia, 74 Regional Anesthesia in Children e 75 Pediatric and Neonatal Critical Care). Figuras reproduzidas do livro para estudo pessoal. Não são questões oficiais da SBA.</p>
-    <p>Resumos: abra pelo botão no topo ou pelo link <b>Revisar no resumo</b> no comentário de cada questão. Há resumos de todos os capítulos: 40, 41, 72, 74 e 75.</p>
-    <p>Respostas, marcações e alternativas riscadas ficam salvas na sua conta e sincronizam entre os seus dispositivos.</p>
-  </footer>
+  <footer class="foot" id="foot"></footer>
 </div>
 
 <script>
 function BOOT(Q, UID, SYNC){
-const KEY = "banco-tea-v3-" + UID, OLD = "banco-ped-tea-v2-x", PAGE = 10;
+const KEY = "banco-tea-v3-" + UID, OLD = "banco-ped-tea-v2-x";
+let PAGE = 10;
 const L = ["A","B","C","D","E"], R = ["I","II","III","IV","V","VI"];
 const LV = {1:"Fácil",2:"Médio",3:"Difícil"};
 const IDX = {}; Q.forEach((q,i)=>IDX[q.id]=i);
@@ -252,6 +263,7 @@ let S = {}, F = {area:"all", sub:"all", lvl:"all", st:"all"}, page = 0;
 try { S = JSON.parse(localStorage.getItem(KEY) || "null") || null; } catch(e) { S = null; }
 if (!S) { S = {}; try { const o = JSON.parse(localStorage.getItem(OLD) || "null"); if (o) { Object.keys(o).forEach(k=>{ if (/^\d+$/.test(k)) S["p"+String(+k+1).padStart(3,"0")] = o[k]; }); } } catch(e) {} }
 try { const f = JSON.parse(localStorage.getItem(KEY + "-f") || "null"); if (f) F = Object.assign(F, f); } catch(e) {}
+try { const pp = +localStorage.getItem(KEY + "-pp"); if ([10,20,50,100].includes(pp)) PAGE = pp; } catch(e) {}
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} SYNC.push(S); }
 function saveF(){ try { localStorage.setItem(KEY + "-f", JSON.stringify(F)); } catch(e) {} }
 const id = i => Q[i].id;
@@ -292,7 +304,7 @@ function renderFilters(){
     fs.hidden = false;
     fs.innerHTML = `<span class="flabel">Subtema</span><button class="chip" data-g="sub" data-v="all">Todos</button>` + Object.keys(subs).sort((a,b)=>subs[b]-subs[a]||a.localeCompare(b)).map(t=>`<button class="chip" data-g="sub" data-v="${esc(t)}">${t} <span class="src">${subs[t]}</span></button>`).join("");
   }
-  document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed", String(F[c.dataset.g]===c.dataset.v)));
+  document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed", String(c.dataset.g==="pp" ? String(PAGE)===c.dataset.v : F[c.dataset.g]===c.dataset.v)));
 }
 
 function qHTML(i){
@@ -349,7 +361,7 @@ function fbHTML(i){
     const lab = q.neg ? (good ? "Gabarito." : "Afirmativa verdadeira.") : (good ? "Correta." : "Incorreta.");
     return `<div class="cm ${good?"is-ok":"is-bad"}"><span class="letter">${L[k]}</span><p><span class="st">${lab}</span> ${o[1].replace(/^(Correta|Incorreta)\.\s*/,"")}</p></div>`;
   }).join("");
-  h += `<div class="key"><b>Conceito-chave.</b> ${q.k}</div><p class="ref">Referência: Miller's Anesthesia, 10ª ed. — ${q.r}</p>`;
+  h += `<div class="key"><b>Conceito-chave.</b> ${q.k}</div><p class="ref">Referência: ${q.rb||"Miller's Anesthesia, 10ª ed."} — ${q.r}</p>`;
   if (q.rs && q.rs.length) h += `<div class="rs-box"><span class="rs-lab">Revisar no resumo:</span> ${q.rs.map(r=>`<button class="rs-open" data-f="${r[0]}" data-s="${r[1]}">${r[2]}</button>`).join(" · ")}</div>`;
   h += `<div class="nextbar"><button class="btn primary next-open" data-q="${i}">Próxima não respondida →</button></div></div>`;
   return h;
@@ -369,7 +381,8 @@ function renderList(scrollTop){
   ["pager-top","pager-bot"].forEach(id=>{
     const el = document.getElementById(id);
     const from = ids.length ? page*PAGE+1 : 0, to = Math.min(ids.length, page*PAGE+PAGE);
-    el.innerHTML = `<button class="btn" data-p="-1" ${page===0?"disabled":""}>← Anterior</button><span>${from}–${to} de ${ids.length}</span><button class="btn" data-p="1" ${page>=pages-1?"disabled":""}>Próxima →</button>`;
+    const a = page===0?"disabled":"", z = page>=pages-1?"disabled":"";
+    el.innerHTML = `<div class="pg"><button class="btn" data-p="first" ${a} aria-label="Primeira página" title="Primeira página">«</button><button class="btn" data-p="-1" ${a} aria-label="Página anterior">←<span class="lbl"> Anterior</span></button></div><span>${from}–${to} de ${ids.length}<br><span class="src">página ${page+1} de ${pages}</span></span><div class="pg"><button class="btn" data-p="1" ${z} aria-label="Próxima página"><span class="lbl">Próxima </span>→</button><button class="btn" data-p="last" ${z} aria-label="Última página" title="Última página">»</button></div>`;
   });
   renderGrid(ids); updateStats();
   if (scrollTop) document.getElementById("pager-top").scrollIntoView({block:"start"});
@@ -415,7 +428,6 @@ function updateStats(){
   Q.forEach((q,i)=>{ if (answered(i)) { n++; by[q.d][0]++; if (rec(i).pick===q.a){ ok++; by[q.d][1]++; } } });
   document.getElementById("s-done").textContent = n;
   document.getElementById("s-total").textContent = Q.length;
-  document.getElementById("n-total").textContent = Q.length;
   document.getElementById("s-ok").textContent = ok;
   document.getElementById("s-pct").textContent = n ? Math.round(100*ok/n)+"%" : "—";
   document.getElementById("s-lvl").textContent = [1,2,3].filter(d=>by[d][0]).map(d=>`${LV[d]} ${by[d][1]}/${by[d][0]}`).join(" · ");
@@ -462,11 +474,13 @@ document.getElementById("list").addEventListener("click", e=>{
 });
 document.querySelector(".panel").addEventListener("click", e=>{
   const c = e.target.closest(".chip");
+  if (c && c.dataset.g === "pp") { const first = page*PAGE; PAGE = +c.dataset.v; try { localStorage.setItem(KEY + "-pp", String(PAGE)); } catch(e) {} page = Math.floor(first/PAGE); renderList(false); return; }
   if (c) { F[c.dataset.g] = c.dataset.v; if (c.dataset.g === "area") F.sub = "all"; saveF(); page = 0; renderList(false); return; }
   if (e.target.closest("#btn-cont")) { const last = S._last != null && IDX[S._last] != null ? IDX[S._last] : -1; const n = nextOpen(last); if (n != null) goTo(n); }
 });
 ["pager-top","pager-bot"].forEach(id=>document.getElementById(id).addEventListener("click", e=>{
-  const b = e.target.closest("button[data-p]"); if (!b || b.disabled) return; page += +b.dataset.p; renderList(true);
+  const b = e.target.closest("button[data-p]"); if (!b || b.disabled) return; const v = b.dataset.p;
+  page = v === "first" ? 0 : v === "last" ? 1e9 : page + (+v); renderList(true);
 }));
 let armed = false;
 document.getElementById("btn-reset").addEventListener("click", ()=>{
@@ -496,7 +510,16 @@ function setTheme(t, save){
 })();
 
 /* ---------- Resumos ---------- */
-const RESUMOS = {"anestesia-pediatrica":"Anestesia Pediátrica (cap. 72)","anestesia-regional-pediatrica":"Anestesia Regional Pediátrica (cap. 74)","terapia-intensiva-pediatrica":"Terapia Intensiva Pediátrica (cap. 75)","via-aerea-adulto":"Via Aérea no Adulto (cap. 40)","anestesia-neuraxial":"Raqui, Peridural e Caudal (cap. 41)"};
+/* Resumos: [arquivo, fonte, capítulo, título]. A lista aparece agrupada por fonte e em ordem de capítulo. */
+const RZLIST = [
+  ["via-aerea-adulto","Miller's Anesthesia, 10ª ed.",40,"Manejo da via aérea no adulto"],
+  ["anestesia-neuraxial","Miller's Anesthesia, 10ª ed.",41,"Raquianestesia, peridural e caudal"],
+  ["anestesia-pediatrica","Miller's Anesthesia, 10ª ed.",72,"Anestesia pediátrica"],
+  ["anestesia-regional-pediatrica","Miller's Anesthesia, 10ª ed.",74,"Anestesia regional pediátrica"],
+  ["terapia-intensiva-pediatrica","Miller's Anesthesia, 10ª ed.",75,"Terapia intensiva pediátrica e neonatal"],
+  ["anestesia-bucomaxilofacial","Tratado de Anestesiologia SAESP",178,"Anestesia para cirurgia bucomaxilofacial"]
+];
+const RESUMOS = {}; RZLIST.forEach(r=>RESUMOS[r[0]] = `${r[3]} (cap. ${r[2]})`);
 const RZ = {};
 function loadRZ(f){
   if (!RZ[f]) RZ[f] = window.APP.resumo(f)
@@ -551,8 +574,17 @@ function openFull(f, sec){
 }
 window.addEventListener("message", e=>{ const m = e.data||{}; if (m.type==="resumo-close") closeFull(); if (m.type==="theme-set" && m.theme) setTheme(m.theme, false); });
 (function(){
-  const box = document.getElementById("rz-links");
-  Object.entries(RESUMOS).forEach(([f,t])=>{ const b = Object.assign(document.createElement("button"),{className:"btn",textContent:t}); b.onclick = ()=>openFull(f,""); box.appendChild(b); });
+  const box = document.getElementById("rz-links"), srcs = [...new Set(RZLIST.map(r=>r[1]))];
+  document.getElementById("rz-n").textContent = "· " + RZLIST.length;
+  srcs.forEach(s=>{
+    box.appendChild(Object.assign(document.createElement("div"),{className:"rz-src",textContent:s}));
+    RZLIST.filter(r=>r[1]===s).sort((a,b)=>a[2]-b[2]).forEach(r=>{
+      const b = document.createElement("button"); b.className = "rz-item"; b.type = "button";
+      b.innerHTML = `<span class="cap">Cap. ${r[2]}</span><span>${r[3]}</span>`; b.onclick = ()=>openFull(r[0],""); box.appendChild(b);
+    });
+  });
+  const fontes = [...new Set(Q.map(q=>q.rb||"Miller's Anesthesia, 10ª ed."))];
+  document.getElementById("foot").innerHTML = `<p><b>Fontes:</b> ${fontes.join(" · ")}.</p>`;
 })();
 
 (function start(){
@@ -571,8 +603,8 @@ window.goTo = goTo; window.closeFull = closeFull; window.Qn = () => Q.length;
 
 <div class="gate" id="gate">
   <form class="lcard" id="lform" hidden>
-    <div class="eyebrow">Anestesiologia · estudo para TEA/TSA</div>
-    <h1>Banco de Questões</h1>
+    <div class="eyebrow">Estudo para TEA/TSA</div>
+    <h1>Banco de Questões em Anestesiologia</h1>
     <label>Usuário<input id="lu" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></label>
     <label>Senha<input id="lp" name="password" type="password" autocomplete="current-password" required></label>
     <button class="btn primary" type="submit" id="lbtn">Entrar</button>
