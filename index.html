@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://bwzqupfcmrnyzvzzixie.supabase.co; connect-src 'self' https://bwzqupfcmrnyzvzzixie.supabase.co; frame-src blob:; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
 </head>
 <body class="locked">
 <title>Banco de Questões em Anestesiologia</title>
@@ -24,6 +26,11 @@ body.locked .wrap{display:none}
 .acct .who{color:var(--ink);font-weight:500}
 .acct .sync.err{color:var(--bad)}
 .acct .lnk{font:inherit;background:none;border:0;padding:0;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.pw-ov{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.pw-ov .lcard{max-width:380px}
+.pw-ov .row{display:flex;gap:10px;justify-content:flex-end}
+.pw-ov .lnote{margin:0;font-size:13px;color:var(--muted)}
+.pw-ov .lok{margin:0;color:var(--good,#1a7f37);font-size:14px}
 </style>
 
 <script>try{var t=localStorage.getItem("banco-tema");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
@@ -788,20 +795,27 @@ const toEmail = u => u.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "") + "@" +
 const nice = e => { const n = (e || "").split("@")[0]; return n ? n.charAt(0).toUpperCase() + n.slice(1) : ""; };
 const NOMES = Object.assign({getulio: "Getúlio", bruno: "Bruno"}, CFG.nomes || {});
 
-function loadScript(src){
-  return new Promise((ok, err) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => err(new Error("Não carregou " + src)); document.head.appendChild(s); });
+function loadScript(src, integrity){
+  return new Promise((ok, err) => { const s = document.createElement("script"); s.src = src; if (integrity) { s.integrity = integrity; s.crossOrigin = "anonymous"; } s.onload = ok; s.onerror = () => err(new Error("Não carregou " + src)); document.head.appendChild(s); });
 }
 
 /* ---------- Supabase ---------- */
 async function supabaseAPI(){
   if (!CFG.supabaseUrl || !CFG.supabaseAnonKey) throw new Error("config");
-  await loadScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js");
+  // supabase-js 2.45.4 servido pelo próprio site (pasta vendor/): sem depender de CDN de terceiros
+  await loadScript("vendor/supabase.js");
   const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {auth: {persistSession: true, autoRefreshToken: true}});
   const B = sb.storage.from("conteudo");
   return {
     async session(){ const {data} = await sb.auth.getSession(); const u = data.session && data.session.user; return u ? {id: u.id, email: u.email} : null; },
     async signIn(user, pass){ const {data, error} = await sb.auth.signInWithPassword({email: toEmail(user), password: pass + SUFIXO}); if (error) throw error; return {id: data.user.id, email: data.user.email}; },
     async signOut(){ await sb.auth.signOut(); },
+    async changePass(user, atual, nova){
+      // confere a senha atual, troca e derruba as outras sessões (outros aparelhos ou quem tiver a senha antiga)
+      const {error: e1} = await sb.auth.signInWithPassword({email: toEmail(user), password: atual + SUFIXO}); if (e1) throw new Error("atual");
+      const {error: e2} = await sb.auth.updateUser({password: nova + SUFIXO}); if (e2) throw e2;
+      try { await sb.auth.signOut({scope: "others"}); } catch(e) {}
+    },
     async text(path){
       // via URL assinada + no-store: conteúdo atualizado aparece na hora, sem cache antigo
       const {data, error} = await B.createSignedUrl(path, 120); if (error) throw error;
@@ -833,6 +847,7 @@ function mockAPI(){
     async session(){ return ls("mock-sessao"); },
     async signIn(user, pass){ const u = user.trim().toLowerCase(); if (USERS[u] !== pass) throw new Error("Invalid login credentials"); const s = {id: "mock-" + u, email: toEmail(u)}; ls("mock-sessao", s); return s; },
     async signOut(){ localStorage.removeItem("mock-sessao"); },
+    async changePass(user, atual, nova){ const u = user.trim().toLowerCase(); if (USERS[u] !== atual) throw new Error("atual"); USERS[u] = nova; },
     async text(path){ const r = await fetch("conteudo/" + path); if (!r.ok) throw new Error(r.status); return r.text(); },
     async sign(paths){ const o = {}; paths.forEach(p => o[p] = new URL("conteudo/" + p, location.href).href); return o; },
     async getProg(uid){ return ls("mock-db-" + uid); },
@@ -968,12 +983,45 @@ async function enter(u){
   $("#gate").hidden = true; document.body.classList.remove("locked");
   const user = (u.email || "").split("@")[0];
   const acct = $("#acct");
-  acct.innerHTML = `<span class="who"></span><span class="sync"></span><button class="lnk" type="button" id="sair">Sair</button>`;
+  acct.innerHTML = `<span class="who"></span><span class="sync"></span><button class="lnk" type="button" id="senha">Trocar senha</button><button class="lnk" type="button" id="sair">Sair</button>`;
   acct.querySelector(".who").textContent = NOMES[user] || nice(u.email);
   setStatus(sync.dirty ? "saving" : "ok");
+  $("#senha").onclick = () => trocarSenha(user);
   $("#sair").onclick = async () => { await sync.flush(); await API.signOut(); location.reload(); };
   window.REPORTES = makeReportes(u, NOMES[user] || nice(u.email));
   BOOT(Q, u.id, sync);
+}
+
+/* ---------- trocar senha ---------- */
+function trocarSenha(user){
+  if (document.querySelector(".pw-ov")) return;
+  const ov = document.createElement("div"); ov.className = "pw-ov"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-label", "Trocar senha");
+  ov.innerHTML = `<form class="lcard" autocomplete="on">
+    <h2 style="margin:0">Trocar senha</h2>
+    <input type="text" name="username" autocomplete="username" hidden>
+    <label>Senha atual<input name="atual" type="password" autocomplete="current-password" required></label>
+    <label>Nova senha<input name="nova" type="password" autocomplete="new-password" minlength="10" required></label>
+    <label>Repita a nova senha<input name="nova2" type="password" autocomplete="new-password" minlength="10" required></label>
+    <p class="lnote">Pelo menos 10 caracteres. Uma frase longa é mais segura e fácil de lembrar. Os outros aparelhos serão desconectados.</p>
+    <p class="lerr" role="alert"></p>
+    <div class="row"><button class="btn" type="button" data-x>Cancelar</button><button class="btn primary" type="submit">Trocar</button></div>
+  </form>`;
+  const f = ov.querySelector("form"), msg = ov.querySelector(".lerr");
+  f.username.value = user;
+  const close = () => ov.remove();
+  ov.querySelector("[data-x]").onclick = close;
+  ov.addEventListener("click", e => { if (e.target === ov) close(); });
+  f.addEventListener("submit", async e => {
+    e.preventDefault(); msg.textContent = "";
+    const atual = f.atual.value, nova = f.nova.value;
+    if (nova.length < 10) { msg.textContent = "A nova senha precisa ter pelo menos 10 caracteres."; return; }
+    if (nova !== f.nova2.value) { msg.textContent = "As duas senhas novas não são iguais."; return; }
+    if (nova === atual || nova.toLowerCase().includes(user)) { msg.textContent = "Escolha uma senha diferente da atual e que não contenha o usuário."; return; }
+    const b = f.querySelector("[type=submit]"); b.disabled = true;
+    try { await API.changePass(user, atual, nova); f.innerHTML = `<h2 style="margin:0">Senha trocada</h2><p class="lok">Pronto. Use a nova senha nos outros aparelhos.</p><div class="row"><button class="btn primary" type="button">Fechar</button></div>`; f.querySelector("button").onclick = close; }
+    catch(err) { msg.textContent = err.message === "atual" ? "Senha atual incorreta." : "Não foi possível trocar agora (" + (err.message || "erro") + ")."; b.disabled = false; }
+  });
+  document.body.appendChild(ov); f.atual.focus();
 }
 
 $("#lform").addEventListener("submit", async e => {

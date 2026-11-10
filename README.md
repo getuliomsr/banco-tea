@@ -2,8 +2,6 @@
 
 Aplicativo do banco de questões TEA/TSA (login e histórico por usuário).
 
-- `index.html` – o banco; `publicar.html` – envio do conteúdo para o Supabase (só o administrador).
-- `config.js` – URL e chave *anon* do Supabase.
-- O conteúdo (questões, figuras e resumos) **não** fica neste repositório: está num bucket privado do Supabase.
-
-Passo a passo completo em `LEIA-ME.md`; configuração do banco de dados em `supabase.sql`.
+- `index.html`: o aplicativo. `config.js`: endereço e chave pública (*publishable*) do Supabase.
+- `vendor/`: biblioteca supabase-js 2.45.4 (licença MIT), servida daqui para não depender de CDN.
+- O conteúdo (questões, figuras e resumos) **não** fica neste repositório: está num armazenamento privado, acessível só com login.
