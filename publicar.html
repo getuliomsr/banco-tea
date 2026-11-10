@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Publicar conteúdo</title>
+<script src="config.js"></script>
+<style>
+:root{--bg:#f3f5f7;--surface:#fff;--ink:#18202b;--muted:#5a6573;--line:#dce1e7;--accent:#28469e;--ok:#1d7448;--bad:#b0352c}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1318;--surface:#161b22;--ink:#e5e8ed;--muted:#97a1ae;--line:#29303a;--accent:#93acff;--ok:#55c48f;--bad:#ff8273;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:32px 16px}
+main{max-width:560px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:22px;margin:0}
+p{margin:0;color:var(--muted)}
+label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
+input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 11px}
+button{font:inherit;font-weight:500;background:var(--accent);color:#fff;border:0;border-radius:9px;padding:10px 14px;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+#log{font:13px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap;max-height:300px;overflow:auto;color:var(--muted)}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Publicar conteúdo no banco</h1>
+  <p>Envia a pasta <b>conteudo</b> (questões, figuras e resumos) para o armazenamento privado. Só o usuário administrador consegue. Arquivos com o mesmo nome são substituídos.</p>
+  <label>Usuário<input id="u" autocomplete="username" autocapitalize="none"></label>
+  <label>Senha<input id="p" type="password" autocomplete="current-password"></label>
+  <label>Pasta “conteudo”<input id="dir" type="file" webkitdirectory multiple></label>
+  <button id="go">Enviar</button>
+  <div id="log"></div>
+</main>
+<script>
+(async function(){
+const CFG = window.BANCO_CONFIG || {}, $ = s => document.querySelector(s), log = (t, c) => { const d = document.createElement("div"); d.textContent = t; if (c) d.className = c; $("#log").appendChild(d); $("#log").scrollTop = 1e9; };
+const toEmail = u => u.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "") + "@" + (CFG.dominio || "bancotea.app");
+await new Promise((ok, err) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"; s.onload = ok; s.onerror = err; document.head.appendChild(s); });
+const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+const TYPES = {json: "application/json", html: "text/html; charset=utf-8", css: "text/css", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", svg: "image/svg+xml", webp: "image/webp", pdf: "application/pdf"};
+$("#go").onclick = async () => {
+  const files = [...$("#dir").files]; if (!files.length) { log("Escolha a pasta conteudo.", "bad"); return; }
+  $("#go").disabled = true; $("#log").textContent = "";
+  const {error: le} = await sb.auth.signInWithPassword({email: toEmail($("#u").value), password: $("#p").value + (CFG.sufixoSenha || "#tea")});
+  if (le) { log("Login falhou: " + le.message, "bad"); $("#go").disabled = false; return; }
+  let ok = 0, bad = 0;
+  for (const f of files) {
+    const rel = f.webkitRelativePath.split("/").slice(1).join("/");   // tira o nome da pasta escolhida
+    if (!rel || rel.startsWith(".")) continue;
+    const ext = rel.split(".").pop().toLowerCase();
+    const {error} = await sb.storage.from("conteudo").upload(rel, f, {upsert: true, contentType: TYPES[ext] || f.type || "application/octet-stream", cacheControl: "3600"});
+    if (error) { bad++; log("✗ " + rel + " — " + error.message, "bad"); } else { ok++; log("✓ " + rel); }
+  }
+  log(`Pronto: ${ok} enviados, ${bad} com erro.`, bad ? "bad" : "ok");
+  await sb.auth.signOut(); $("#go").disabled = false;
+};
+})();
+</script>
+</body>
+</html>

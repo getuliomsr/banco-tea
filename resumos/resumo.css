@@ -1,0 +1,52 @@
+/* Estilos do conteúdo dos resumos (.rz) — usados pela página do resumo e pela gaveta do banco */
+.rz{font-family:var(--f-text);font-size:1.02rem;line-height:1.65;color:var(--ink)}
+.rz h2.part{font-family:var(--f-ui);font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:3.2rem 0 .4rem;padding-top:.6rem;border-top:2px solid var(--accent)}
+.rz section{scroll-margin-top:72px;padding:.2rem 0 .6rem}
+.rz h3{font-family:var(--f-ui);font-weight:600;font-size:1.32rem;line-height:1.3;margin:2rem 0 .7rem;color:var(--ink)}
+.rz h4{font-family:var(--f-ui);font-weight:600;font-size:1rem;margin:1.4rem 0 .4rem;color:var(--ink)}
+.rz p{margin:.55rem 0}
+.rz ul,.rz ol{margin:.5rem 0;padding-left:1.25rem}
+.rz li{margin:.28rem 0}
+.rz li>ul{margin:.2rem 0}
+.rz b{font-weight:600}
+.rz a{color:var(--accent)}
+.rz sub,.rz sup{font-size:.72em}
+.rz .muted{color:var(--muted)}
+.rz .note{font-size:.9rem;color:var(--muted)}
+.rz .formula{font-family:var(--f-mono);font-size:.92rem;background:var(--accent-soft);border-radius:8px;padding:.6rem .8rem;overflow-x:auto}
+.rz ul.keys li::marker{color:var(--accent)}
+.rz ul.steps{list-style:none;padding-left:0}
+.rz ul.steps>li{border-left:3px solid var(--accent);padding:.15rem 0 .15rem .8rem;margin:.6rem 0}
+.rz .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start}
+.rz .grid2>*{min-width:0}
+@media (max-width:720px){.rz .grid2{grid-template-columns:1fr}}
+
+/* tabelas */
+.rz .tb{width:100%;border-collapse:collapse;font-family:var(--f-ui);font-size:.86rem;line-height:1.45;margin:.9rem 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:table}
+.rz .tbg{margin:1rem 0}
+.rz .grid2 .tbg{margin:0}
+.rz .tbcap{font-family:var(--f-ui);font-weight:600;font-size:.8rem;color:var(--muted);margin:0 0 .35rem;letter-spacing:.02em}
+.rz .tb th,.rz .tb td{padding:.45rem .6rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.rz .tb tr:last-child td,.rz .tb tr:last-child th{border-bottom:0}
+.rz .tb th{background:var(--accent-soft);font-weight:600;color:var(--ink)}
+.rz .tbw{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px}
+.rz .tbw .tb{margin:0}
+
+/* caixas */
+.rz .hy,.rz .extra{font-family:var(--f-ui);font-size:.9rem;line-height:1.55;border-radius:10px;padding:.75rem .9rem;margin:1rem 0}
+.rz .hy{background:var(--mark);border-left:4px solid var(--mid)}
+.rz .hy>b:first-child,.rz .extra>b:first-child{display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem}
+.rz .hy>b:first-child{color:var(--mid)}
+.rz .extra{background:var(--ok-soft);border-left:4px solid var(--ok)}
+.rz .extra>b:first-child{color:var(--ok)}
+.rz .extra .tb{font-size:.82rem}
+.rz .ref{display:block;margin-top:.45rem;font-size:.78rem;color:var(--muted);font-style:normal}
+.rz ol.refs{font-family:var(--f-ui);font-size:.84rem;color:var(--muted)}
+
+/* figuras: fundo branco também no modo escuro (as figuras do livro são em fundo branco) */
+.rz figure{margin:1.1rem 0;background:#fff;border:1px solid var(--line);border-radius:12px;padding:.6rem;max-width:620px}
+.rz figure.sm{max-width:420px}
+.rz figure.wide{max-width:none}
+.rz figure img{display:block;width:100%;height:auto;border-radius:6px;cursor:zoom-in}
+.rz figcaption{font-family:var(--f-ui);font-size:.8rem;line-height:1.45;color:#44505e;padding:.5rem .2rem .1rem}
+.rz .grid2 figure{margin:0}
