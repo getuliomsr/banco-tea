@@ -79,6 +79,10 @@ h1{font-family:var(--f-text);font-weight:600;font-size:clamp(25px,5vw,33px);line
 .chip{font:500 13px/1 var(--f-ui);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 11px;border-radius:999px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 .chip[aria-pressed="true"] .src{color:inherit;opacity:.85}
+details.filt summary{cursor:pointer;font-family:var(--f-ui);font-size:14px;font-weight:500;color:var(--accent);list-style-position:inside}
+details.filt summary .fsum{color:var(--muted);font-weight:400;font-size:13px}
+details.filt[open] summary{margin-bottom:10px}
+details.filt .fbody{display:grid;gap:12px}
 details.sheet summary{cursor:pointer;font-size:13px;color:var(--accent);font-weight:500;list-style-position:inside}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px;margin-top:10px}
 .cell{font:500 12px/1 var(--f-mono);height:28px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:4px;cursor:pointer;font-variant-numeric:tabular-nums}
@@ -215,7 +219,7 @@ details.rz summary{cursor:pointer;padding:10px 14px;font-size:14px;font-weight:5
 details.rz[open] summary{border-bottom:1px solid var(--line)}
 .rz-grid{display:grid;gap:2px;padding:6px}
 .rz-src{font-family:var(--f-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:8px 8px 2px}
-.rz-item{display:grid;grid-template-columns:4.6em 1fr;gap:10px;align-items:baseline;text-align:left;font:inherit;font-family:var(--f-ui);font-size:14.5px;color:var(--ink);background:none;border:0;border-radius:4px;padding:8px;cursor:pointer}
+.rz-item{display:grid;grid-template-columns:5.8em 1fr;gap:10px;align-items:baseline;text-align:left;font:inherit;font-family:var(--f-ui);font-size:14.5px;color:var(--ink);background:none;border:0;border-radius:4px;padding:8px;cursor:pointer}
 .rz-item:hover{background:var(--accent-soft)}
 .rz-item .cap{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .drw-scrim{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:44}
@@ -251,6 +255,7 @@ body.noscroll{overflow:hidden}
       <button class="btn" id="rep-btn" type="button" style="font-family:var(--f-ui);padding:6px 10px">Reportes</button>
     </div>
     <div class="cont" id="cont"></div>
+    <details class="filt" id="filt"><summary>Filtros e opções <span class="fsum" id="filt-sum"></span></summary><div class="fbody">
     <div class="frow" role="group" aria-label="Área" id="f-area"><span class="flabel">Área</span></div>
     <div class="frow" role="group" aria-label="Subtema" id="f-sub" hidden><span class="flabel">Subtema</span></div>
     <div class="frow" role="group" aria-label="Dificuldade"><span class="flabel">Dificuldade</span>
@@ -272,6 +277,7 @@ body.noscroll{overflow:hidden}
       <button class="chip" data-g="pp" data-v="50">50</button>
       <button class="chip" data-g="pp" data-v="100">100</button>
     </div>
+    </div></details>
     <details class="sheet" id="sheet"><summary>Cartão-resposta</summary>
       <div class="grid" id="grid"></div>
       <div class="legend">Verde: acerto · vermelho: erro · tracejado: gabarito visto sem responder. Toque num número para ir à questão.</div>
@@ -344,7 +350,10 @@ function renderFilters(){
     fs.innerHTML = `<span class="flabel">Subtema</span><button class="chip" data-g="sub" data-v="all">Todos</button>` + Object.keys(subs).sort((a,b)=>a.localeCompare(b,"pt",{numeric:true})).map(t=>`<button class="chip" data-g="sub" data-v="${esc(t)}">${t.replace(/^Ponto /,"")} <span class="src">${subs[t]}</span></button>`).join("");
     if (F.sub !== "all" && !subs[F.sub]) { F.sub = "all"; saveF(); }
   }
-  document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed", String(c.dataset.g==="pp" ? String(PAGE)===c.dataset.v : F[c.dataset.g]===c.dataset.v)));
+  document.querySelectorAll(".panel .chip").forEach(c=>c.setAttribute("aria-pressed", String(c.dataset.g==="pp" ? String(PAGE)===c.dataset.v : F[c.dataset.g]===c.dataset.v)));
+  const STL = {open:"não respondidas", bad:"erradas", ok:"certas", img:"com imagem"};
+  const act = [F.area!=="all" ? (F.sub!=="all" ? F.area + " › " + F.sub : F.area) : "", F.lvl!=="all" ? LV[F.lvl] : "", F.st!=="all" ? STL[F.st] : ""].filter(Boolean);
+  const fsum = document.getElementById("filt-sum"); if (fsum) fsum.textContent = "· " + (act.length ? act.join(" · ") : "todas as questões") + " · " + PAGE + " por página";
 }
 
 function qHTML(i){
@@ -555,6 +564,8 @@ function openPerf(){
   document.body.appendChild(o); document.body.classList.add("noscroll"); o.querySelector("#perf-x").focus();
 }
 document.getElementById("perf-btn").addEventListener("click", openPerf);
+(function(){ const d = document.getElementById("filt"); try { if (localStorage.getItem(KEY + "-filt") === "1") d.open = true; } catch(e) {}
+  d.addEventListener("toggle", ()=>{ try { localStorage.setItem(KEY + "-filt", d.open ? "1" : "0"); } catch(e) {} }); })();
 document.addEventListener("keydown", e=>{ if (e.key==="Escape") { const o = document.querySelector(".perf"); if (o) { o.remove(); document.body.classList.remove("noscroll"); } } });
 
 /* ---------- Reportar erro ----------
@@ -658,18 +669,19 @@ function setTheme(t, save){
 })();
 
 /* ---------- Resumos ---------- */
-/* Resumos: [arquivo, fonte, capítulo, título]. A lista aparece agrupada por fonte e em ordem de capítulo. */
+/* Resumos: [arquivo, [pontos do programa], título]. A lista aparece agrupada por ME e ponto. */
 const RZLIST = [
-  ["via-aerea-adulto","Miller's Anesthesia, 10ª ed.",40,"Manejo da via aérea no adulto"],
-  ["anestesia-neuraxial","Miller's Anesthesia, 10ª ed.",41,"Raquianestesia, peridural e caudal"],
-  ["anestesia-transplantes","Miller's Anesthesia, 10ª ed.",56,"Transplantes de órgãos (caps. 56–57 e Bases SBA)"],
-  ["anestesia-ambulatorial","Miller's Anesthesia, 10ª ed.",68,"Anestesia ambulatorial e fora do centro cirúrgico (cap. 68 e Bases SBA)"],
-  ["anestesia-pediatrica","Miller's Anesthesia, 10ª ed.",72,"Anestesia pediátrica"],
-  ["anestesia-regional-pediatrica","Miller's Anesthesia, 10ª ed.",74,"Anestesia regional pediátrica"],
-  ["terapia-intensiva-pediatrica","Miller's Anesthesia, 10ª ed.",75,"Terapia intensiva pediátrica e neonatal"],
-  ["anestesia-bucomaxilofacial","Tratado de Anestesiologia SAESP",178,"Anestesia para cirurgia bucomaxilofacial"]
+  ["via-aerea-adulto",[5],"Manejo da via aérea no adulto"],
+  ["anestesia-neuraxial",[17],"Raquianestesia, peridural e caudal"],
+  ["anestesia-ambulatorial",[36,49],"Anestesia ambulatorial e fora do centro cirúrgico"],
+  ["anestesia-bucomaxilofacial",[40],"Anestesia para cirurgia bucomaxilofacial"],
+  ["anestesia-pediatrica",[47],"Anestesia pediátrica"],
+  ["anestesia-regional-pediatrica",[47],"Anestesia regional pediátrica"],
+  ["terapia-intensiva-pediatrica",[47],"Terapia intensiva pediátrica e neonatal"],
+  ["anestesia-transplantes",[48],"Anestesia para transplantes de órgãos"],
+  ["dor-aguda",[50],"Dor aguda pós-operatória e inflamação"]
 ];
-const RESUMOS = {}; RZLIST.forEach(r=>RESUMOS[r[0]] = /\(caps?\./.test(r[3]) ? r[3] : `${r[3]} (cap. ${r[2]})`);
+const RESUMOS = {}; RZLIST.forEach(r=>RESUMOS[r[0]] = r[2]);
 const RZ = {};
 function loadRZ(f){
   if (!RZ[f]) RZ[f] = window.APP.resumo(f)
@@ -724,14 +736,17 @@ function openFull(f, sec){
 }
 window.addEventListener("message", e=>{ const m = e.data||{}; if (m.type==="resumo-close") closeFull(); if (m.type==="theme-set" && m.theme) setTheme(m.theme, false); });
 (function(){
-  const box = document.getElementById("rz-links"), srcs = [...new Set(RZLIST.map(r=>r[1]))];
+  const box = document.getElementById("rz-links");
   document.getElementById("rz-n").textContent = "· " + RZLIST.length;
-  srcs.forEach(s=>{
-    box.appendChild(Object.assign(document.createElement("div"),{className:"rz-src",textContent:s}));
-    RZLIST.filter(r=>r[1]===s).sort((a,b)=>a[2]-b[2]).forEach(r=>{
-      const b = document.createElement("button"); b.className = "rz-item"; b.type = "button";
-      b.innerHTML = `<span class="cap">Cap. ${r[2]}</span><span>${r[3]}</span>`; b.onclick = ()=>openFull(r[0],""); box.appendChild(b);
-    });
+  const meOf = n => n <= 19 ? "ME1" : n <= 36 ? "ME2" : "ME3";
+  const rows = []; RZLIST.forEach(r=>r[1].forEach(n=>rows.push([n, r])));
+  rows.sort((a,b)=>a[0]-b[0] || a[1][2].localeCompare(b[1][2],"pt"));
+  let cur = "";
+  rows.forEach(([n, r])=>{
+    const me = meOf(n);
+    if (me !== cur) { cur = me; box.appendChild(Object.assign(document.createElement("div"),{className:"rz-src",textContent:me})); }
+    const b = document.createElement("button"); b.className = "rz-item"; b.type = "button";
+    b.innerHTML = `<span class="cap">Ponto ${n}</span><span>${r[2]}</span>`; b.onclick = ()=>openFull(r[0],""); box.appendChild(b);
   });
   const fontes = [...new Set(Q.map(q=>q.rb||"Miller's Anesthesia, 10ª ed."))];
   document.getElementById("foot").innerHTML = `<p><b>Fontes:</b> ${fontes.join(" · ")}.</p>`;
