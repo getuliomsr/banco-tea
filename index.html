@@ -749,14 +749,14 @@ window.addEventListener("message", e=>{ const m = e.data||{}; if (m.type==="resu
   const box = document.getElementById("rz-links");
   document.getElementById("rz-n").textContent = "· " + RZLIST.length;
   const meOf = n => n <= 19 ? "ME1" : n <= 36 ? "ME2" : "ME3";
-  const rows = []; RZLIST.forEach(r=>r[1].forEach(n=>rows.push([n, r])));
+  const rows = RZLIST.map(r=>[r[1][0], r]);  /* cada resumo aparece uma vez, no seu ponto principal */
   rows.sort((a,b)=>a[0]-b[0] || a[1][2].localeCompare(b[1][2],"pt"));
   let cur = "";
   rows.forEach(([n, r])=>{
     const me = meOf(n);
     if (me !== cur) { cur = me; box.appendChild(Object.assign(document.createElement("div"),{className:"rz-src",textContent:me})); }
     const b = document.createElement("button"); b.className = "rz-item"; b.type = "button";
-    b.innerHTML = `<span class="cap">Ponto ${n}</span><span>${r[2]}</span>`; b.onclick = ()=>openFull(r[0],""); box.appendChild(b);
+    b.innerHTML = `<span class="cap">${r[1].length>1?"Pontos "+r[1].join(" e "):"Ponto "+n}</span><span>${r[2]}</span>`; b.onclick = ()=>openFull(r[0],""); box.appendChild(b);
   });
   const fontes = [...new Set(Q.map(q=>q.rb||"Miller's Anesthesia, 10ª ed."))];
   document.getElementById("foot").innerHTML = `<p><b>Fontes:</b> ${fontes.join(" · ")}.</p>`;
