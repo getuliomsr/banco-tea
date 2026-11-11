@@ -310,6 +310,11 @@ let PAGE = 10;
 const L = ["A","B","C","D","E"], R = ["I","II","III","IV","V","VI"];
 const LV = {1:"Fácil",2:"Médio",3:"Difícil"};
 const IDX = {}; Q.forEach((q,i)=>IDX[q.id]=i);
+/* Ordem de exibição: pelo programa da SBA (ME1 → ME3, ponto a ponto), mantendo a ordem original dentro de cada ponto.
+   O ID (p001…) não muda: é ele que guarda o histórico. O número mostrado é a posição na lista filtrada. */
+const PT = q => { const t = (q.g||[]).find(x=>/^ME\d › Ponto \d+/.test(x)); return t ? +t.match(/Ponto (\d+)/)[1] : 999; };
+const ORDER = Q.map((q,i)=>i).sort((a,b)=>PT(Q[a])-PT(Q[b]) || a-b);
+let POS = {};
 let S = {}, F = {area:"all", sub:"all", lvl:"all", st:"all"}, page = 0;
 try { S = JSON.parse(localStorage.getItem(KEY) || "null") || null; } catch(e) { S = null; }
 if (!S) { S = {}; try { const o = JSON.parse(localStorage.getItem(OLD) || "null"); if (o) { Object.keys(o).forEach(k=>{ if (/^\d+$/.test(k)) S["p"+String(+k+1).padStart(3,"0")] = o[k]; }); } } catch(e) {} }
@@ -329,7 +334,7 @@ const esc = t => t.replace(/"/g,"&quot;");
 const STRIKE_SVG = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 10h12"/><path d="M6.5 6.2C7 4.9 8.3 4 10 4c2 0 3.4 1.1 3.4 2.6"/><path d="M13.6 13.2c-.3 1.6-1.7 2.8-3.7 2.8-2 0-3.5-1-3.8-2.6"/></svg>';
 
 function filtered(){
-  return Q.map((q,i)=>i).filter(i=>{
+  const L0 = ORDER.filter(i=>{
     const q = Q[i];
     if (F.area !== "all") {
       const tags = q.g.filter(t=>areaOf(t)===F.area);
@@ -341,6 +346,11 @@ function filtered(){
     if (F.st !== "all") { const s = status(i); if (F.st === "open" ? (s === "ok" || s === "bad") : s !== F.st) return false; }
     return true;
   });
+  if (F.area === "all") return L0;
+  /* com uma área escolhida, ordena pelos pontos dessa área */
+  const pa = i => { const t = Q[i].g.find(x=>areaOf(x)===F.area && /Ponto \d+/.test(x)); return t ? +t.match(/Ponto (\d+)/)[1] : 999; };
+  const pos = {}; L0.forEach((i,k)=>pos[i]=k);
+  return L0.slice().sort((a,b)=>pa(a)-pa(b) || pos[a]-pos[b]);
 }
 
 function renderFilters(){
@@ -364,8 +374,8 @@ function renderFilters(){
 }
 
 function qHTML(i){
-  const q = Q[i], n = String(i+1).padStart(3,"0");
-  let h = `<div class="q-head"><span class="q-num">Questão ${n}</span><span class="lvl d${q.d}" id="lv${i}" hidden>${LV[q.d]}</span><span class="src" id="sr${i}" hidden>${q.src}</span><button class="rep-q" id="rq${i}" data-q="${i}" type="button" title="Reportar um erro nesta questão">${repOpenFor(q.id)?'<span class="rep-dot" title="Há reporte aberto"></span>':""}Reportar erro</button></div>`;
+  const q = Q[i], n = String(POS[i]!=null?POS[i]+1:i+1);
+  let h = `<div class="q-head"><span class="q-num" title="Código ${q.id}">Questão ${n}</span><span class="lvl d${q.d}" id="lv${i}" hidden>${LV[q.d]}</span><span class="src" id="sr${i}" hidden>${q.src}</span><button class="rep-q" id="rq${i}" data-q="${i}" type="button" title="Reportar um erro nesta questão">${repOpenFor(q.id)?'<span class="rep-dot" title="Há reporte aberto"></span>':""}Reportar erro</button></div>`;
   h += `<form class="rep-form" id="rf${i}" data-q="${i}" hidden><div class="rep-t">Reportar erro na questão ${n}</div>
     <select name="tipo" aria-label="Tipo de problema"><option>Enunciado ou alternativas</option><option>Gabarito</option><option>Comentário ou explicação</option><option>Resumo ou link do resumo</option><option>Imagem</option><option>Tags ou fonte</option><option>Outro</option></select>
     <textarea name="texto" required placeholder="O que está errado ou confuso? (ex.: o enunciado cita uma tabela do livro que não aparece aqui)"></textarea>
@@ -431,6 +441,7 @@ function fbHTML(i){
 function renderList(scrollTop){
   renderFilters();
   const ids = filtered(), pages = Math.max(1, Math.ceil(ids.length / PAGE));
+  POS = {}; ids.forEach((i,k)=>POS[i]=k);
   if (page >= pages) page = pages - 1; if (page < 0) page = 0;
   const list = document.getElementById("list");
   list.innerHTML = "";
@@ -457,9 +468,10 @@ function goTo(i){
 }
 
 function nextOpen(from){
-  const ids = filtered().filter(i=>!done(i));
+  const all = filtered(), p0 = all.indexOf(from);
+  const ids = all.filter(i=>!done(i));
   if (!ids.length) return null;
-  const after = ids.find(i=>i > from);
+  const after = ids.find(i=>all.indexOf(i) > p0);
   return after != null ? after : ids[0];
 }
 
@@ -470,15 +482,15 @@ function renderCont(){
   const nx = nextOpen(last);
   if (!n) { el.innerHTML = `<span class="hint">Comece pela questão 1 ou escolha uma área abaixo.</span>`; return; }
   el.innerHTML = nx == null ? `<span class="hint">Você já passou por todas as questões deste filtro.</span>`
-    : `<button class="btn primary" id="btn-cont">Continuar de onde parei → questão ${nx+1}</button><span class="hint">Abre a próxima não respondida, respeitando os filtros.</span>`;
+    : `<button class="btn primary" id="btn-cont">Continuar de onde parei → questão ${filtered().indexOf(nx)+1}</button><span class="hint">Abre a próxima não respondida, respeitando os filtros.</span>`;
 }
 
 function renderGrid(ids){
   const g = document.getElementById("grid"); g.innerHTML = "";
-  ids.forEach(i=>{
+  ids.forEach((i,k)=>{
     const c = document.createElement("button"); const s = status(i);
     c.className = "cell" + (s==="ok"?" ok":s==="bad"?" bad":s==="seen"?" seen":"");
-    c.textContent = i+1; c.id = "c"+i; c.setAttribute("aria-label","Ir para a questão "+(i+1));
+    c.textContent = k+1; c.id = "c"+i; c.setAttribute("aria-label","Ir para a questão "+(k+1));
     c.addEventListener("click",()=>goTo(i));
     g.appendChild(c);
   });
@@ -618,7 +630,7 @@ function openReps(){
       <div class="rep-tabs"><button class="chip" data-t="aberto" aria-pressed="${repTab==="aberto"}">Abertos <span class="src">${nA}</span></button><button class="chip" data-t="resolvido" aria-pressed="${repTab==="resolvido"}">Resolvidos <span class="src">${nR}</span></button><button class="chip" data-t="todos" aria-pressed="${repTab==="todos"}">Todos</button><button class="btn" id="rep-copy" type="button" style="margin-left:auto">Copiar abertos</button><span class="hint" id="rep-cm"></span></div>`;
     if (!list.length) h += `<div class="empty">Nenhum reporte aqui.</div>`;
     list.forEach(r=>{ const qi = IDX[r.qid]; const dt = r.criado ? new Date(r.criado).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}) : "";
-      h += `<div class="rep-item${r.status==="resolvido"?" done":""}"><div class="rep-meta"><b>Questão ${String((qi!=null?qi+1:r.num)||"?").padStart(3,"0")}</b> · ${escH(r.qid)} · ${escH(r.tipo)} · ${escH(r.autor||"")} · ${dt}${r.pend?" · envio pendente":""}${r.status==="resolvido"?" · resolvido":""}</div>
+      h += `<div class="rep-item${r.status==="resolvido"?" done":""}"><div class="rep-meta"><b>Código ${escH(r.qid)}</b> · ${escH(r.tipo)} · ${escH(r.autor||"")} · ${dt}${r.pend?" · envio pendente":""}${r.status==="resolvido"?" · resolvido":""}</div>
         ${r.trecho?`<div class="rep-trecho">${escH(r.trecho)}…</div>`:""}<div class="rep-txt">${escH(r.texto)}</div>${r.resposta?`<div class="rep-trecho"><b>Resposta:</b> ${escH(r.resposta)}</div>`:""}
         <div class="rep-act">${qi!=null?`<button class="btn" data-go="${qi}">Ir para a questão</button>`:""}${r.pend?"":`<button class="btn ghost" data-st="${escH(r.id)}">${r.status==="resolvido"?"Reabrir":"Marcar como resolvido"}</button>`}</div></div>`; });
     o.innerHTML = h + `</div>`;
@@ -746,7 +758,7 @@ function openFull(f, sec){
 }
 window.addEventListener("message", e=>{ const m = e.data||{}; if (m.type==="resumo-close") closeFull(); if (m.type==="theme-set" && m.theme) setTheme(m.theme, false); });
 (function(){
-  const box = document.getElementById("rz-links");
+  const box = document.getElementById("rz-links"); box.innerHTML = "";
   document.getElementById("rz-n").textContent = "· " + RZLIST.length;
   const meOf = n => n <= 19 ? "ME1" : n <= 36 ? "ME2" : "ME3";
   const rows = RZLIST.map(r=>[r[1][0], r]);  /* cada resumo aparece uma vez, no seu ponto principal */
@@ -968,6 +980,7 @@ function showLogin(msg){
   setTimeout(() => $("#lu").focus(), 50);
 }
 async function enter(u){
+  if (window.__BANCO_ENTROU) return; window.__BANCO_ENTROU = true;  /* evita carregar o banco duas vezes */
   $("#lform").hidden = true; $("#splash").hidden = false; $("#splash").textContent = "Carregando questões…";
   let Q;
   try {
