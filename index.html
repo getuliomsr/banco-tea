@@ -312,7 +312,7 @@ const LV = {1:"Fácil",2:"Médio",3:"Difícil"};
 const IDX = {}; Q.forEach((q,i)=>IDX[q.id]=i);
 /* Ordem de exibição: pelo programa da SBA (ME1 → ME3, ponto a ponto), mantendo a ordem original dentro de cada ponto.
    O ID (p001…) não muda: é ele que guarda o histórico. O número mostrado é a posição na lista filtrada. */
-const PT = q => { const t = (q.g||[]).find(x=>/^ME\d › Ponto \d+/.test(x)); return t ? +t.match(/Ponto (\d+)/)[1] : 999; };
+const PT = q => { if (q.pp) return q.pp; const t = (q.g||[]).find(x=>/^ME\d › Ponto \d+/.test(x)); return t ? +t.match(/Ponto (\d+)/)[1] : 999; };
 const ORDER = Q.map((q,i)=>i).sort((a,b)=>PT(Q[a])-PT(Q[b]) || a-b);
 let POS = {};
 let S = {}, F = {area:"all", sub:"all", lvl:"all", st:"all"}, page = 0;
@@ -692,7 +692,8 @@ function setTheme(t, save){
 const RZLIST = [
   ["via-aerea-adulto",[5],"Manejo da via aérea no adulto"],
   ["anestesia-neuraxial",[17],"Raquianestesia, peridural e caudal"],
-  ["anestesia-ambulatorial",[36,49],"Anestesia ambulatorial e fora do centro cirúrgico"],
+  ["anestesia-ambulatorial",[36],"Anestesia ambulatorial"],
+  ["anestesia-fora-cc",[49],"Anestesia fora do centro cirúrgico"],
   ["anestesia-bucomaxilofacial",[40],"Anestesia para cirurgia bucomaxilofacial"],
   ["anestesia-pediatrica",[47],"Anestesia pediátrica"],
   ["anestesia-regional-pediatrica",[47],"Anestesia regional pediátrica"],
