@@ -422,7 +422,7 @@ function fbHTML(i){
     const lab = q.neg ? (good ? "Gabarito." : "Afirmativa verdadeira.") : (good ? "Correta." : "Incorreta.");
     return `<div class="cm ${good?"is-ok":"is-bad"}"><span class="letter">${L[k]}</span><p><span class="st">${lab}</span> ${o[1].replace(/^(Correta|Incorreta)\.\s*/,"")}</p></div>`;
   }).join("");
-  h += `<div class="key"><b>Conceito-chave.</b> ${q.k}</div><p class="ref">Referência: ${q.rb||"Miller's Anesthesia, 10ª ed."} — ${q.r}</p>`;
+  h += (q.k?`<div class="key"><b>Conceito-chave.</b> ${q.k}</div>`:"") + `<p class="ref">Referência: ${q.rb||"Miller's Anesthesia, 10ª ed."} — ${q.r}</p>`;
   if (q.rs && q.rs.length) h += `<div class="rs-box"><span class="rs-lab">Revisar no resumo:</span> ${q.rs.map(r=>`<button class="rs-open" data-f="${r[0]}" data-s="${r[1]}">${r[2]}</button>`).join(" · ")}</div>`;
   h += `<div class="nextbar"><button class="btn primary next-open" data-q="${i}">Próxima não respondida →</button></div></div>`;
   return h;
