@@ -33,13 +33,15 @@
 .rz .tbw .tb{margin:0}
 
 /* caixas */
-.rz .hy,.rz .extra{font-family:var(--f-ui);font-size:.9rem;line-height:1.55;border-radius:10px;padding:.75rem .9rem;margin:1rem 0}
+.rz .hy,.rz .extra,.rz .dv{font-family:var(--f-ui);font-size:.9rem;line-height:1.55;border-radius:10px;padding:.75rem .9rem;margin:1rem 0}
 .rz .hy{background:var(--mark);border-left:4px solid var(--mid)}
-.rz .hy>b:first-child,.rz .extra>b:first-child{display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem}
+.rz .hy>b:first-child,.rz .extra>b:first-child,.rz .dv>b:first-child{display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem}
 .rz .hy>b:first-child{color:var(--mid)}
 .rz .extra{background:var(--ok-soft);border-left:4px solid var(--ok)}
 .rz .extra>b:first-child{color:var(--ok)}
 .rz .extra .tb{font-size:.82rem}
+.rz .dv{background:var(--accent-soft);border-left:4px solid var(--accent)}
+.rz .dv>b:first-child{color:var(--accent)}
 .rz .ref{display:block;margin-top:.45rem;font-size:.78rem;color:var(--muted);font-style:normal}
 .rz ol.refs{font-family:var(--f-ui);font-size:.84rem;color:var(--muted)}
 
