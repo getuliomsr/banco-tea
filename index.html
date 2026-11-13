@@ -150,6 +150,7 @@ details.sheet summary{cursor:pointer;font-size:13px;color:var(--accent);font-wei
 .cm p{margin:0;font-size:14.5px}
 .cm .st{font-weight:600}
 .cm.is-ok .st{color:var(--ok)} .cm.is-bad .st{color:var(--bad)}
+.ctx{font-size:14.5px;line-height:1.5;margin:10px 0 4px;padding:8px 12px;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 4px 4px 0}
 .key{background:var(--mark);border-radius:4px;padding:10px 12px;font-size:14.5px;margin-top:12px}
 .key b{font-weight:600}
 .ref{font-size:12.5px;color:var(--muted);margin-top:10px}
@@ -239,6 +240,10 @@ details.rz[open] summary{border-bottom:1px solid var(--line)}
 .drw-b .loading{padding:30px 0;color:var(--muted);font-size:14px}
 .full{position:fixed;inset:0;z-index:46;background:var(--bg);display:flex;flex-direction:column}
 .full iframe{flex:1;width:100%;border:0;background:var(--bg)}
+.rzrep{position:fixed;inset:0;z-index:49;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:12px}
+@media(min-width:700px){.rzrep{align-items:center}}
+.rzrep .rep-form{width:min(560px,100%);margin:0;background:var(--bg);box-shadow:0 10px 40px rgba(0,0,0,.3);padding:16px}
+.rzrep .rep-where{font-size:13px;color:var(--muted)}
 .full .fh{display:flex;justify-content:flex-end;padding:calc(6px + env(safe-area-inset-top,0px)) 10px 6px;border-bottom:1px solid var(--line);background:var(--surface)}
 body.noscroll{overflow:hidden}
 </style>
@@ -418,6 +423,7 @@ function fbHTML(i){
   if (!answered(i)) v = `<p class="verdict neutral">Gabarito: ${L[q.a]}</p>`;
   else v = s.pick === q.a ? `<p class="verdict ok">Você acertou. Gabarito: ${L[q.a]}</p>` : `<p class="verdict bad">Você marcou ${L[s.pick]}. Gabarito: ${L[q.a]}</p>`;
   let h = `<div class="feedback">${v}`;
+  if (q.ctx) h += `<div class="ctx"><b>Contexto.</b> ${q.ctx}</div>`;
   if (q.i) {
     h += `<div class="fb-title">${q.corr ? "Análise dos itens" : "Análise das afirmativas"}</div>`;
     h += q.i.map((it,k)=>{
@@ -589,7 +595,7 @@ document.addEventListener("keydown", e=>{ if (e.key==="Escape") { const o = docu
 
 /* ---------- Reportar erro ----------
    No app (login), window.REPORTES vem do shell e grava no Supabase (tabela "reportes"),
-   visível para os dois usuários. Fora do app, os reportes ficam neste navegador. */
+   visível para todos os usuários. Fora do app, os reportes ficam neste navegador. */
 const REP = window.REPORTES || (function(){
   const K = "banco-tea-reportes";
   const all = ()=>{ try { return JSON.parse(localStorage.getItem(K) || "[]"); } catch(e) { return []; } };
@@ -626,13 +632,13 @@ function openReps(){
     const list = REPS.filter(r=>repTab==="todos" || (repTab==="resolvido" ? r.status==="resolvido" : r.status!=="resolvido"));
     const nA = REPS.filter(r=>r.status!=="resolvido").length, nR = REPS.length - nA;
     let h = `<div class="in"><div class="perf-h"><h2>Reportes de erro</h2><button class="btn" id="perf-x">Fechar ✕</button></div>
-      <p class="perf-note">Erros apontados ${REP.local ? "neste navegador" : "por Getúlio e Bruno"}. Use “Ir para a questão” para conferir e “Marcar como resolvido” depois de corrigir. “Copiar abertos” gera um texto para colar numa conversa com o Claude.</p>
+      <p class="perf-note">Erros apontados ${REP.local ? "neste navegador" : "pelos usuários"} nas questões e nos resumos. Use “Ir para a questão” para conferir e “Marcar como resolvido” depois de corrigir. “Copiar abertos” gera um texto para colar numa conversa com o Claude.</p>
       <div class="rep-tabs"><button class="chip" data-t="aberto" aria-pressed="${repTab==="aberto"}">Abertos <span class="src">${nA}</span></button><button class="chip" data-t="resolvido" aria-pressed="${repTab==="resolvido"}">Resolvidos <span class="src">${nR}</span></button><button class="chip" data-t="todos" aria-pressed="${repTab==="todos"}">Todos</button><button class="btn" id="rep-copy" type="button" style="margin-left:auto">Copiar abertos</button><span class="hint" id="rep-cm"></span></div>`;
     if (!list.length) h += `<div class="empty">Nenhum reporte aqui.</div>`;
     list.forEach(r=>{ const qi = IDX[r.qid]; const dt = r.criado ? new Date(r.criado).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}) : "";
-      h += `<div class="rep-item${r.status==="resolvido"?" done":""}"><div class="rep-meta"><b>Código ${escH(r.qid)}</b> · ${escH(r.tipo)} · ${escH(r.autor||"")} · ${dt}${r.pend?" · envio pendente":""}${r.status==="resolvido"?" · resolvido":""}</div>
+      h += `<div class="rep-item${r.status==="resolvido"?" done":""}"><div class="rep-meta"><b>${r.qid==="rz"?"Resumo":"Código "+escH(r.qid)}</b> · ${escH(r.tipo)} · ${escH(r.autor||"")} · ${dt}${r.pend?" · envio pendente":""}${r.status==="resolvido"?" · resolvido":""}</div>
         ${r.trecho?`<div class="rep-trecho">${escH(r.trecho)}…</div>`:""}<div class="rep-txt">${escH(r.texto)}</div>${r.resposta?`<div class="rep-trecho"><b>Resposta:</b> ${escH(r.resposta)}</div>`:""}
-        <div class="rep-act">${qi!=null?`<button class="btn" data-go="${qi}">Ir para a questão</button>`:""}${r.pend?"":`<button class="btn ghost" data-st="${escH(r.id)}">${r.status==="resolvido"?"Reabrir":"Marcar como resolvido"}</button>`}</div></div>`; });
+        <div class="rep-act">${qi!=null?`<button class="btn" data-go="${qi}">Ir para a questão</button>`:""}${r.qid==="rz"&&/\[([^\]#]+)(#[^\]]*)?\]$/.test(r.trecho||"")?`<button class="btn" data-rz="${escH((r.trecho.match(/\[([^\]]+)\]$/)||[])[1])}">Abrir o resumo</button>`:""}${r.pend?"":`<button class="btn ghost" data-st="${escH(r.id)}">${r.status==="resolvido"?"Reabrir":"Marcar como resolvido"}</button>`}</div></div>`; });
     o.innerHTML = h + `</div>`;
   };
   o.addEventListener("click", async e=>{
@@ -640,9 +646,10 @@ function openReps(){
     if (e.target.closest("#perf-x")) { close(); return; }
     const t = e.target.closest("[data-t]"); if (t) { repTab = t.dataset.t; draw(); return; }
     const g = e.target.closest("[data-go]"); if (g) { close(); goTo(+g.dataset.go); return; }
+    const z = e.target.closest("[data-rz]"); if (z) { close(); const [zf, zs] = z.dataset.rz.split("#"); openFull(zf, zs||""); return; }
     if (e.target.closest("#rep-copy")) {
       const ab = REPS.filter(r=>r.status!=="resolvido");
-      const txt = "Reportes abertos no banco de questões (" + ab.length + "):\n\n" + ab.map(r=>`- ${r.qid} (questão ${IDX[r.qid]!=null?IDX[r.qid]+1:r.num}) · ${r.tipo} · ${r.autor||""}: ${r.texto}\n  Trecho: ${r.trecho||""}`).join("\n");
+      const txt = "Reportes abertos no banco de questões (" + ab.length + "):\n\n" + ab.map(r=>`- ${r.qid==="rz"?"resumo":r.qid+" (questão "+(IDX[r.qid]!=null?IDX[r.qid]+1:r.num)+")"} · ${r.tipo} · ${r.autor||""}: ${r.texto}\n  Trecho: ${r.trecho||""}`).join("\n");
       let ok = false; try { await navigator.clipboard.writeText(txt); ok = true; } catch(_) {}
       o.querySelector("#rep-cm").textContent = ok ? "Copiado." : "Não deu para copiar neste navegador.";
       return; }
@@ -718,11 +725,12 @@ function openRS(f, sec){
   closeRS();
   const scrim = Object.assign(document.createElement("div"),{className:"drw-scrim"});
   const d = document.createElement("aside"); d.className = "drw"; d.setAttribute("role","dialog"); d.setAttribute("aria-label","Trecho do resumo");
-  d.innerHTML = `<div class="drw-h"><span class="t">Resumo · <b>${RESUMOS[f]||f}</b></span><button class="btn rs-full">Resumo completo</button><button class="btn rs-x" aria-label="Fechar">✕</button></div><div class="drw-b"><div class="loading">Carregando…</div></div>`;
+  d.innerHTML = `<div class="drw-h"><span class="t">Resumo · <b>${RESUMOS[f]||f}</b></span><button class="btn rs-rep" title="Reportar erro neste trecho do resumo">Reportar</button><button class="btn rs-full">Resumo completo</button><button class="btn rs-x" aria-label="Fechar">✕</button></div><div class="drw-b"><div class="loading">Carregando…</div></div>`;
   document.body.append(scrim, d); document.body.classList.add("noscroll");
   scrim.onclick = closeRS;
   d.querySelector(".rs-x").onclick = closeRS;
   d.querySelector(".rs-full").onclick = ()=>{ closeRS(); openFull(f, sec); };
+  d.querySelector(".rs-rep").onclick = ()=>{ const h = d.querySelector(".drw-b h3"); openRzRep(f, sec, h ? h.textContent : ""); };
   d.querySelector(".drw-b").addEventListener("click", e=>{
     const im = e.target.closest("figure img"); if (im) { openLB(im.getAttribute("src")); return; }
     const a = e.target.closest("a[href^='#']"); if (a) { e.preventDefault(); openRS(f, a.getAttribute("href").slice(1)); return; }
@@ -739,8 +747,9 @@ function openRS(f, sec){
   document.addEventListener("keydown", function k(e){ if (e.key==="Escape" && !document.querySelector(".lb")){ closeRS(); document.removeEventListener("keydown",k);} });
 }
 function closeFull(){ document.querySelectorAll(".full").forEach(x=>x.remove()); if (!document.querySelector(".drw")) document.body.classList.remove("noscroll"); }
+let FULLF = "";
 function openFull(f, sec){
-  closeFull();
+  closeFull(); FULLF = f;
   const o = document.createElement("div"); o.className = "full"; o.setAttribute("role","dialog"); o.setAttribute("aria-label","Resumo completo");
   o.innerHTML = `<div class="loading" style="padding:24px">Carregando resumo…</div>`;
   document.body.appendChild(o); document.body.classList.add("noscroll");
@@ -759,7 +768,27 @@ function openFull(f, sec){
     fr.src = url + (sec ? "#" + sec : "");
   }).catch(()=>{ o.innerHTML = `<div class="loading" style="padding:24px">Não foi possível abrir o resumo. <button class="btn" onclick="this.closest('.full').remove();document.body.classList.remove('noscroll')">Fechar</button></div>`; });
 }
-window.addEventListener("message", e=>{ const m = e.data||{}; if (m.type==="resumo-close") closeFull(); if (m.type==="theme-set" && m.theme) setTheme(m.theme, false); });
+function openRzRep(f, sec, title){
+  document.querySelectorAll(".rzrep").forEach(x=>x.remove());
+  const o = document.createElement("div"); o.className = "rzrep"; o.setAttribute("role","dialog"); o.setAttribute("aria-label","Reportar erro no resumo");
+  const where = (RESUMOS[f]||f) + (title ? " › " + title : "");
+  o.innerHTML = `<form class="rep-form"><div class="rep-t">Reportar erro no resumo</div><div class="rep-where">${escH(where)}</div>
+    <select name="tipo" aria-label="Tipo de problema"><option>Conteúdo errado ou desatualizado</option><option>Falta conteúdo</option><option>Divergência entre fontes</option><option>Figura ou tabela</option><option>Índice ou link</option><option>Outro</option></select>
+    <textarea name="texto" required placeholder="O que está errado, faltando ou confuso neste trecho?"></textarea>
+    <div class="rep-act"><button class="btn primary rep-send" type="submit">Enviar reporte</button><button class="btn ghost rep-cancel" type="button">Cancelar</button><span class="hint rep-msg"></span></div></form>`;
+  const fm = o.querySelector("form"), msg = o.querySelector(".rep-msg"), close = ()=>o.remove();
+  o.addEventListener("click", e=>{ if (e.target===o || e.target.closest(".rep-cancel")) close(); });
+  fm.addEventListener("submit", async e=>{
+    e.preventDefault(); const txt = fm.texto.value.trim(); if (!txt) { msg.textContent = "Descreva o problema."; return; }
+    const btn = fm.querySelector(".rep-send"); btn.disabled = true; msg.textContent = "Enviando…";
+    let r; try { r = await REP.add({qid: "rz", num: null, tipo: fm.tipo.value, texto: txt, trecho: (where + " [" + f + (sec ? "#" + sec : "") + "]").slice(0,400)}); } catch(err) { r = {ok:false}; }
+    btn.disabled = false;
+    if (r && (r.ok || r.pend)) { msg.textContent = r.ok ? "Reporte enviado. Obrigado!" : "Salvo neste aparelho; será enviado assim que possível."; fm.texto.value = ""; setTimeout(close, 1500); loadReps(); }
+    else msg.textContent = "Não foi possível enviar agora. Tente de novo.";
+  });
+  document.body.appendChild(o); fm.texto.focus();
+}
+window.addEventListener("message", e=>{ const m = e.data||{}; if (m.type==="resumo-close") closeFull(); if (m.type==="resumo-report" && FULLF) openRzRep(FULLF, m.sec||"", m.title||""); if (m.type==="theme-set" && m.theme) setTheme(m.theme, false); });
 (function(){
   const box = document.getElementById("rz-links"); box.innerHTML = "";
   document.getElementById("rz-n").textContent = "· " + RZLIST.length;
@@ -811,7 +840,7 @@ const SUFIXO = CFG.sufixoSenha || "#tea";        // o Supabase exige ≥ 6 carac
 const $ = s => document.querySelector(s);
 const toEmail = u => u.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "") + "@" + DOMINIO;
 const nice = e => { const n = (e || "").split("@")[0]; return n ? n.charAt(0).toUpperCase() + n.slice(1) : ""; };
-const NOMES = Object.assign({getulio: "Getúlio", bruno: "Bruno"}, CFG.nomes || {});
+const NOMES = Object.assign({getulio: "Getúlio", bruno: "Bruno", guilherme: "Guilherme"}, CFG.nomes || {});
 
 function loadScript(src, integrity){
   return new Promise((ok, err) => { const s = document.createElement("script"); s.src = src; if (integrity) { s.integrity = integrity; s.crossOrigin = "anonymous"; } s.onload = ok; s.onerror = () => err(new Error("Não carregou " + src)); document.head.appendChild(s); });
@@ -859,7 +888,7 @@ async function supabaseAPI(){
 
 /* ---------- modo simulado (teste local, sem servidor) ---------- */
 function mockAPI(){
-  const USERS = CFG.mockUsers || {getulio: "getulio", bruno: "bruno"};
+  const USERS = CFG.mockUsers || {getulio: "getulio", bruno: "bruno", guilherme: "guilherme"};
   const ls = (k, v) => { if (v === undefined) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch(e) { return null; } } localStorage.setItem(k, JSON.stringify(v)); };
   return {
     async session(){ return ls("mock-sessao"); },
