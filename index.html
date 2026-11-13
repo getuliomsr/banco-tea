@@ -231,6 +231,19 @@ details.rz[open] summary{border-bottom:1px solid var(--line)}
 .rz-item{display:grid;grid-template-columns:5.8em 1fr;gap:10px;align-items:baseline;text-align:left;font:inherit;font-family:var(--f-ui);font-size:14.5px;color:var(--ink);background:none;border:0;border-radius:4px;padding:8px;cursor:pointer}
 .rz-item:hover{background:var(--accent-soft)}
 .rz-item .cap{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rzs{padding:10px 10px 4px;border-bottom:1px solid var(--line)}
+.rzs input{width:100%;font:400 15px var(--f-ui);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:8px 14px;outline:none}
+.rzs input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.rzs .rzs-n{font-size:12.5px;color:var(--muted);padding:6px 4px 2px}
+.rzs-res{display:grid;gap:2px;max-height:min(62vh,560px);overflow:auto;padding:2px 0 8px}
+.rzs-hit{display:block;width:100%;text-align:left;font:inherit;font-family:var(--f-ui);background:none;border:0;border-radius:4px;padding:8px;cursor:pointer;color:var(--ink)}
+.rzs-hit:hover{background:var(--accent-soft)}
+.rzs-hit .w{font-size:12.5px;color:var(--muted);margin-bottom:2px}
+.rzs-hit .w b{color:var(--accent);font-weight:600}
+.rzs-hit .sn{font-family:var(--f-text);font-size:14px;line-height:1.45}
+.rzs-hit mark{background:#ffe48a;color:inherit;border-radius:2px;padding:0 1px}
+:root[data-theme="dark"] .rzs-hit mark{background:#6b5a16}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .rzs-hit mark{background:#6b5a16}}
 .drw-scrim{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:44}
 .drw{position:fixed;top:0;right:0;bottom:0;width:min(640px,100vw);background:var(--bg);z-index:45;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.25);border-left:1px solid var(--line)}
 .drw-h{display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;border-bottom:1px solid var(--line);background:var(--surface)}
@@ -255,7 +268,7 @@ body.noscroll{overflow:hidden}
     <div class="eyebrow">Estudo para TEA/TSA</div>
     <div class="acct" id="acct"></div>
     <h1>Banco de Questões em Anestesiologia</h1>
-    <details class="rz" id="rz"><summary>Resumos <span class="src" id="rz-n"></span></summary><div class="rz-grid" id="rz-links"></div></details>
+    <details class="rz" id="rz"><summary>Resumos <span class="src" id="rz-n"></span></summary><div class="rzs"><input id="rzq" type="search" placeholder="Buscar em todos os resumos (ex.: Aldrete, cloroprocaína)" autocomplete="off" spellcheck="false" aria-label="Buscar em todos os resumos"><div class="rzs-n" id="rzs-n" hidden></div><div class="rzs-res" id="rzs-res"></div></div><div class="rz-grid" id="rz-links"></div></details>
   </header>
 
   <section class="panel" aria-label="Progresso e filtros">
@@ -751,7 +764,9 @@ function openRS(f, sec){
 }
 function closeFull(){ document.querySelectorAll(".full").forEach(x=>x.remove()); if (!document.querySelector(".drw")) document.body.classList.remove("noscroll"); }
 let FULLF = "";
+let RZQ = "";
 function openFull(f, sec){
+  const q = RZQ; RZQ = "";
   closeFull(); FULLF = f;
   const o = document.createElement("div"); o.className = "full"; o.setAttribute("role","dialog"); o.setAttribute("aria-label","Resumo completo");
   o.innerHTML = `<div class="loading" style="padding:24px">Carregando resumo…</div>`;
@@ -761,7 +776,7 @@ function openFull(f, sec){
     o.innerHTML = `<iframe title="${RESUMOS[f]||f}"></iframe>`;
     const fr = o.querySelector("iframe");
     fr.addEventListener("load", ()=>{
-      try { fr.contentWindow.postMessage({type:"theme", theme: effTheme()}, "*"); } catch(_){}
+      try { fr.contentWindow.postMessage({type:"theme", theme: effTheme()}, "*"); if (q) fr.contentWindow.postMessage({type:"resumo-busca", q, id: sec||""}, "*"); } catch(_){}
       try { fr.contentDocument.addEventListener("click", e=>{
         const a = e.target.closest && e.target.closest("a[href*='.html']"); if (!a) return;
         e.preventDefault(); const [p, h] = a.getAttribute("href").split("#");
@@ -807,6 +822,61 @@ window.addEventListener("message", e=>{ const m = e.data||{}; if (m.type==="resu
   });
   const fontes = [...new Set(Q.map(q=>q.rb||"Miller's Anesthesia, 10ª ed."))];
   document.getElementById("foot").innerHTML = `<p><b>Fontes:</b> ${fontes.join(" · ")}.</p>`;
+})();
+
+/* ---------- busca em todos os resumos ---------- */
+(function(){
+  const inp = document.getElementById("rzq"), out = document.getElementById("rzs-res"), nfo = document.getElementById("rzs-n");
+  const SUB = {"₀":"0","₁":"1","₂":"2","₃":"3","₄":"4","₅":"5","₆":"6","₇":"7","₈":"8","₉":"9","-":" ","–":" ","—":" ","−":" ","‑":" ","µ":"u","μ":"u","’":"'"};
+  const fc = c => { if (SUB[c]) return SUB[c]; const f = c.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase(); return f.length===1 ? f : (c.toLowerCase()[0]||c); };
+  const fold = t => { let o = ""; for (const c of t) o += fc(c); return o; };   /* 1 caractere → 1 caractere: as posições batem com o texto original */
+  let IDXP = null, tmr = null, seq = 0;
+  function index(){
+    if (!IDXP) IDXP = Promise.all(RZLIST.map(r=>loadRZ(r[0]).then(doc=>{
+      const L = [];
+      doc.querySelectorAll("section[id]").forEach(sc=>{
+        const txt = Array.from(sc.textContent).join("").replace(/\s+/g," ").trim();   /* Array.from: conta pares substitutos como 1 */
+        L.push({f: r[0], id: sc.id, t: sc.getAttribute("data-t") || sc.id, txt: Array.from(txt), ft: fold(txt), ftt: fold(sc.getAttribute("data-t")||"")});
+      });
+      return L;
+    }).catch(()=>[]))).then(a=>a.flat()).catch(e=>{ IDXP = null; throw e; });
+    return IDXP;
+  }
+  const cnt = (h, w) => { let n = 0, k = h.indexOf(w); while (k >= 0) { n++; k = h.indexOf(w, k + w.length); } return n; };
+  function snippet(s, words, phrase){
+    const ft = Array.from(s.ft);
+    const hay = s.ft; let at = hay.indexOf(phrase); if (at < 0) at = Math.min(...words.map(w=>{ const k = hay.indexOf(w); return k < 0 ? 1e9 : k; }));
+    const a = Math.max(0, at - 70), b = Math.min(s.txt.length, at + 150);
+    const sub = s.txt.slice(a, b), fsub = ft.slice(a, b).join("");
+    const mk = new Array(sub.length).fill(false);
+    words.forEach(w=>{ let k = fsub.indexOf(w); while (k >= 0) { for (let j = k; j < k + w.length; j++) mk[j] = true; k = fsub.indexOf(w, k + w.length); } });
+    let h = a > 0 ? "… " : "", on = false;
+    sub.forEach((c,j)=>{ if (mk[j] && !on) { h += "<mark>"; on = true; } if (!mk[j] && on) { h += "</mark>"; on = false; } h += escH(c); });
+    if (on) h += "</mark>"; if (b < s.txt.length) h += " …";
+    return h;
+  }
+  async function run(){
+    const q = inp.value.trim(), my = ++seq;
+    const fq = fold(q), words = fq.split(/\s+/).filter(w=>w.length >= 2);
+    if (fq.length < 3 || !words.length) { out.innerHTML = ""; nfo.hidden = true; return; }
+    nfo.hidden = false; if (!IDXP) nfo.textContent = "Carregando os resumos…";
+    let all; try { all = await index(); } catch(e) { if (my===seq) nfo.textContent = "Não foi possível carregar os resumos agora."; return; }
+    if (my !== seq) return;
+    const res = [];
+    all.forEach(s=>{
+      if (!words.every(w=>s.ft.includes(w) || s.ftt.includes(w))) return;
+      const ph = cnt(s.ft, fq), sc = ph*5 + words.reduce((n,w)=>n + Math.min(cnt(s.ft, w), 8), 0) + (words.every(w=>s.ftt.includes(w)) ? 12 : 0);
+      res.push({s, sc, ph});
+    });
+    res.sort((a,b)=>b.sc - a.sc);
+    const occ = res.reduce((n,r)=>n + Math.max(r.ph, 1), 0), nr = new Set(res.map(r=>r.s.f)).size;
+    nfo.textContent = res.length ? `${res.length} ${res.length>1?"seções":"seção"} em ${nr} ${nr>1?"resumos":"resumo"}` + (res.length > 40 ? " · mostrando as 40 mais relevantes" : "") : "Nada encontrado. Tente outra grafia ou menos palavras.";
+    out.innerHTML = res.slice(0, 40).map((r,i)=>`<button class="rzs-hit" type="button" data-i="${i}"><div class="w"><b>${escH(RESUMOS[r.s.f]||r.s.f)}</b> › ${escH(r.s.t)}</div><div class="sn">${snippet(r.s, words, fq)}</div></button>`).join("");
+    out.onclick = e=>{ const b = e.target.closest(".rzs-hit"); if (!b) return; const r = res[+b.dataset.i]; RZQ = res[+b.dataset.i].ph ? q : words.sort((x,y)=>y.length-x.length)[0]; openFull(r.s.f, r.s.id); };
+  }
+  inp.addEventListener("input", ()=>{ clearTimeout(tmr); tmr = setTimeout(run, 250); });
+  inp.addEventListener("keydown", e=>{ if (e.key==="Enter") { e.preventDefault(); clearTimeout(tmr); run(); } });
+  inp.addEventListener("focus", ()=>{ index().catch(()=>{}); }, {once:true});   /* começa a carregar ao tocar na caixa */
 })();
 
 (function start(){
