@@ -231,6 +231,14 @@ details.rz[open] summary{border-bottom:1px solid var(--line)}
 .rz-item{display:grid;grid-template-columns:5.8em 1fr;gap:10px;align-items:baseline;text-align:left;font:inherit;font-family:var(--f-ui);font-size:14.5px;color:var(--ink);background:none;border:0;border-radius:4px;padding:8px;cursor:pointer}
 .rz-item:hover{background:var(--accent-soft)}
 .rz-item .cap{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rz-item .chev{display:inline-block;margin-left:6px;color:var(--muted);transition:transform .15s}
+.rz-item[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.rz-item .nsub{color:var(--muted);font-size:12.5px;margin-left:6px}
+.rz-sub{display:flex;flex-direction:column;margin:0 0 6px calc(5.8em + 10px);border-left:2px solid var(--accent-soft);padding-left:6px}
+.rz-sub[hidden]{display:none}
+.rz-sub .rz-item{grid-template-columns:2em 1fr;font-size:14px;padding:6px 8px}
+.rz-sub .rz-also{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 8px 0}
+@media (max-width:560px){.rz-sub{margin-left:12px}}
 .rzs{padding:10px 10px 4px;border-bottom:1px solid var(--line)}
 .rzs input{width:100%;font:400 15px var(--f-ui);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:8px 14px;outline:none}
 .rzs input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
@@ -821,14 +829,22 @@ window.addEventListener("message", e=>{ const m = e.data||{}; if (m.type==="resu
   const box = document.getElementById("rz-links"); box.innerHTML = "";
   document.getElementById("rz-n").textContent = "· " + RZLIST.length;
   const meOf = n => n <= 19 ? "ME1" : n <= 36 ? "ME2" : "ME3";
-  const rows = RZLIST.map(r=>[r[1][0], r]);  /* cada resumo aparece uma vez, no seu ponto principal */
-  rows.sort((a,b)=>a[0]-b[0] || a[1][2].localeCompare(b[1][2],"pt"));
+  /* uma linha por ponto do programa; ponto com vários subresumos abre a lista deles (na ordem do RZLIST) */
+  const PT = {}; Q.forEach(q=>(q.g||[]).forEach(t=>{ const m = /Ponto (\d+) · (.+)$/.exec(t); if (m) PT[+m[1]] = m[2]; }));
+  const byP = {}, also = {};
+  RZLIST.forEach(r=>{ (byP[r[1][0]] = byP[r[1][0]] || []).push(r); r[1].slice(1).forEach(p=>{ (also[p] = also[p] || []).push(r); }); });
+  const item = (cap, txt, fn)=>{ const b = document.createElement("button"); b.className = "rz-item"; b.type = "button"; b.innerHTML = `<span class="cap">${cap}</span><span>${txt}</span>`; b.onclick = fn; return b; };
   let cur = "";
-  rows.forEach(([n, r])=>{
-    const me = meOf(n);
+  Object.keys(byP).map(Number).sort((a,b)=>a-b).forEach(n=>{
+    const me = meOf(n), L = byP[n];
     if (me !== cur) { cur = me; box.appendChild(Object.assign(document.createElement("div"),{className:"rz-src",textContent:me})); }
-    const b = document.createElement("button"); b.className = "rz-item"; b.type = "button";
-    b.innerHTML = `<span class="cap">${r[1].length>1?"Pontos "+r[1].join(" e "):"Ponto "+n}</span><span>${r[2]}</span>`; b.onclick = ()=>openFull(r[0],""); box.appendChild(b);
+    if (L.length === 1) { const r = L[0]; box.appendChild(item(r[1].length>1?"Pontos "+r[1].join(" e "):"Ponto "+n, r[2], ()=>openFull(r[0],""))); return; }
+    const sub = document.createElement("div"); sub.className = "rz-sub"; sub.hidden = true; sub.id = "rz-sub-"+n;
+    const head = item("Ponto "+n, `${escH(PT[n]||L[0][2])}<span class="nsub">· ${L.length} subresumos</span><span class="chev" aria-hidden="true">›</span>`, ()=>{ sub.hidden = !sub.hidden; head.setAttribute("aria-expanded", String(!sub.hidden)); });
+    head.setAttribute("aria-expanded","false"); head.setAttribute("aria-controls", sub.id);
+    L.forEach((r,i)=>sub.appendChild(item(String(i+1), r[2], ()=>openFull(r[0],""))));
+    if (also[n]) { sub.appendChild(Object.assign(document.createElement("div"),{className:"rz-also",textContent:"Também neste ponto"})); also[n].forEach(r=>sub.appendChild(item("P"+r[1][0], r[2], ()=>openFull(r[0],"")))); }
+    box.append(head, sub);
   });
   const fontes = [...new Set(Q.map(q=>q.rb||"Miller's Anesthesia, 10ª ed."))];
   document.getElementById("foot").innerHTML = `<p><b>Fontes:</b> ${fontes.join(" · ")}.</p>`;
