@@ -1,0 +1,1207 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://bwzqupfcmrnyzvzzixie.supabase.co; connect-src 'self' https://bwzqupfcmrnyzvzzixie.supabase.co; frame-src blob:; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+</head>
+<body class="locked">
+<title>Banco de Questões em Anestesiologia</title>
+<script src="config.js"></script>
+<style>
+body.locked .wrap{display:none}
+.gate{min-height:100svh;display:flex;align-items:center;justify-content:center;padding:24px 0}
+.gate[hidden]{display:none}
+.lcard{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px 24px;display:flex;flex-direction:column;gap:14px}
+.lcard h1{margin:2px 0 4px}
+.lcard label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
+.lcard input{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+.lcard input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.lcard .btn{justify-content:center;padding:11px 14px;font-size:15px}
+.lerr{min-height:1.4em;margin:0;color:var(--bad);font-size:14px}
+.splash{color:var(--muted);font-size:15px}
+.acct{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:8px 44px 0 0;font-size:13px;color:var(--muted)}
+.acct .who{color:var(--ink);font-weight:500}
+.acct .sync.err{color:var(--bad)}
+.acct .lnk{font:inherit;background:none;border:0;padding:0;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.pw-ov{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.pw-ov .lcard{max-width:380px}
+.pw-ov .row{display:flex;gap:10px;justify-content:flex-end}
+.pw-ov .lnote{margin:0;font-size:13px;color:var(--muted)}
+.pw-ov .lok{margin:0;color:var(--good,#1a7f37);font-size:14px}
+</style>
+
+<script>try{var t=localStorage.getItem("banco-tema");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap">
+<link rel="stylesheet" href="resumos/resumo.css">
+<style>
+/* Layout: folha de prova — coluna única de leitura (~70ch), questões paginadas de 10 em 10; filtros por área › subtema; cartão-resposta recolhível, nada fixo na tela */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --ink:#18202b; --muted:#5a6573; --line:#dce1e7;
+  --accent:#28469e; --accent-soft:#e8edfa;
+  --ok:#1d7448; --ok-soft:#e5f3eb; --bad:#b0352c; --bad-soft:#fbe9e7;
+  --mark:#fff2bf; --easy:#2f7d5b; --mid:#a86a12; --hard:#a4362d;
+  --f-text:"Literata",Georgia,"Times New Roman",serif;
+  --f-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1318; --surface:#161b22; --ink:#e5e8ed; --muted:#97a1ae; --line:#29303a;
+  --accent:#93acff; --accent-soft:#1d2540;
+  --ok:#55c48f; --ok-soft:#14281e; --bad:#ff8273; --bad-soft:#2d1715;
+  --mark:#3a3418; --easy:#5cc495; --mid:#e0a64a; --hard:#ff8a7c; color-scheme:dark;
+}}
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{
+  --bg:#0f1318; --surface:#161b22; --ink:#e5e8ed; --muted:#97a1ae; --line:#29303a;
+  --accent:#93acff; --accent-soft:#1d2540;
+  --ok:#55c48f; --ok-soft:#14281e; --bad:#ff8273; --bad-soft:#2d1715;
+  --mark:#3a3418; --easy:#5cc495; --mid:#e0a64a; --hard:#ff8a7c; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:760px;margin:0 auto}
+header.top{padding-block:32px 16px;position:relative}
+.tbtn{position:absolute;top:24px;right:0;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.tbtn:hover{color:var(--ink);border-color:var(--accent)}
+.tbtn svg{width:16px;height:16px}
+header.top .eyebrow{padding-right:44px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-text);font-weight:600;font-size:clamp(25px,5vw,33px);line-height:1.15;margin:6px 0 10px;text-wrap:balance}
+.lede{color:var(--muted);max-width:64ch;margin:0}
+.lede b{color:var(--ink);font-weight:500}
+
+/* painel de controle */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px;margin:18px 0 20px;display:grid;gap:12px}
+.stats{display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--f-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.stats b{color:var(--ink);font-weight:500}
+.frow{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.flabel{font-size:12px;color:var(--muted);min-width:76px}
+.chip{font:500 13px/1 var(--f-ui);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 11px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.chip[aria-pressed="true"] .src{color:inherit;opacity:.85}
+details.filt summary{cursor:pointer;font-family:var(--f-ui);font-size:14px;font-weight:500;color:var(--accent);list-style-position:inside}
+details.filt summary .fsum{color:var(--muted);font-weight:400;font-size:13px}
+details.filt[open] summary{margin-bottom:10px}
+details.filt .fbody{display:grid;gap:12px}
+details.sheet summary{cursor:pointer;font-size:13px;color:var(--accent);font-weight:500;list-style-position:inside}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px;margin-top:10px}
+.cell{font:500 12px/1 var(--f-mono);height:28px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:4px;cursor:pointer;font-variant-numeric:tabular-nums}
+.cell.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.cell.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.cell.seen{border-style:dashed;color:var(--accent)}
+.legend{font-size:12px;color:var(--muted);margin-top:8px}
+
+.pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pager .btn{white-space:nowrap}
+.pager span{text-align:center;flex:1}
+.pager .pg{display:flex;gap:6px}
+.pp .chip{padding:6px 10px}
+.pager .btn[disabled]{opacity:.4;cursor:default}
+
+/* questão */
+.q{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:22px 22px 18px;margin-bottom:18px;scroll-margin-top:16px}
+.q-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:12px}
+.q-num{font-family:var(--f-mono);font-size:13px;font-weight:500;color:var(--accent)}
+.tag{font-size:12px;color:var(--muted)}
+.lvl{font:500 11px/1 var(--f-ui);letter-spacing:.04em;text-transform:uppercase;padding:4px 7px;border-radius:3px;border:1px solid currentColor}
+.lvl.d1{color:var(--easy)} .lvl.d2{color:var(--mid)} .lvl.d3{color:var(--hard)}
+.stem{font-family:var(--f-text);font-size:16.5px;line-height:1.6;margin:0 0 14px}
+.items{font-family:var(--f-text);font-size:15.5px;margin:0 0 14px;padding:0;list-style:none;display:grid;gap:8px}
+.items li{display:grid;grid-template-columns:2.4em 1fr;gap:4px}
+.items.corr li{grid-template-columns:1fr}
+.items .rn{font-family:var(--f-mono);font-size:13px;color:var(--muted);padding-top:2px}
+.opts{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.orow{display:grid;grid-template-columns:1fr 40px;gap:6px;align-items:stretch}
+.opt{width:100%;text-align:left;display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;font:inherit;font-family:var(--f-text);font-size:15.5px;line-height:1.5;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:5px;padding:10px 12px;cursor:pointer;min-width:0}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.letter{font-family:var(--f-mono);font-size:13px;font-weight:500;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;color:var(--muted)}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.opt.sel .letter{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.opt.struck .otext{text-decoration:line-through;text-decoration-thickness:1.5px;color:var(--muted)}
+.opt.struck .letter{opacity:.5}
+.strike{border:1px solid var(--line);background:transparent;border-radius:5px;color:var(--muted);cursor:pointer;display:grid;place-items:center;padding:0}
+.strike svg{width:18px;height:18px}
+.strike[aria-pressed="true"]{color:var(--bad);border-color:var(--bad);background:var(--bad-soft)}
+.strike:disabled{opacity:.35;cursor:default}
+.opt.right{border-color:var(--ok);background:var(--ok-soft);box-shadow:none}
+.opt.right .letter{background:var(--ok);border-color:var(--ok);color:var(--surface);opacity:1}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft);box-shadow:none}
+.opt.wrong .letter{background:var(--bad);border-color:var(--bad);color:var(--surface)}
+.opt.faded{opacity:.62}
+.qactions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.hint{font-size:12px;color:var(--muted)}
+
+.feedback{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.verdict{font-weight:600;font-size:14px;margin:0 0 10px}
+.verdict.ok{color:var(--ok)} .verdict.bad{color:var(--bad)} .verdict.neutral{color:var(--accent)}
+.fb-title{font-family:var(--f-mono);font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+.cm{display:grid;grid-template-columns:30px 1fr;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.cm:last-child{border-bottom:0}
+.cm .letter{width:24px;height:24px;font-size:12px}
+.cm.is-ok .letter{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.cm p{margin:0;font-size:14.5px}
+.cm .st{font-weight:600}
+.cm.is-ok .st{color:var(--ok)} .cm.is-bad .st{color:var(--bad)}
+.ctx{font-size:14.5px;line-height:1.5;margin:10px 0 4px;padding:8px 12px;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 4px 4px 0}
+.key{background:var(--mark);border-radius:4px;padding:10px 12px;font-size:14.5px;margin-top:12px}
+.kt{border-collapse:collapse;margin:4px 0 8px;font-size:13.5px;display:block;overflow-x:auto;max-width:100%}.kt th,.kt td{border:1px solid var(--line);padding:3px 7px;text-align:left;vertical-align:top}.kt th{background:var(--accent-soft)}
+.key b{font-weight:600}
+.ref{font-size:12.5px;color:var(--muted);margin-top:10px}
+.btn{font:500 13px/1 var(--f-ui);padding:9px 13px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn.primary:disabled{opacity:.4;cursor:default}
+.btn.ghost{border-color:transparent;color:var(--muted);text-decoration:underline;text-underline-offset:2px;padding-inline:4px}
+.chip:focus-visible,.opt:focus-visible,.cell:focus-visible,.btn:focus-visible,.strike:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cont{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.cont .hint{font-size:13px}
+.qtags{display:flex;flex-wrap:wrap;gap:4px 6px;margin:-4px 0 12px}
+.qtags[hidden]{display:none}
+.qtag{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:2px 6px;background:transparent;cursor:pointer;font-family:var(--f-ui)}
+.qtag:hover{border-color:var(--accent);color:var(--accent)}
+.src{font-size:12px;color:var(--muted)}
+figure.qimg{margin:0 0 14px;display:grid;gap:6px}
+figure.qimg button{padding:0;border:1px solid var(--line);border-radius:5px;background:#000;cursor:zoom-in;overflow:hidden;display:block;width:100%}
+figure.qimg img{display:block;width:100%;height:auto;max-height:420px;object-fit:contain}
+figure.qimg figcaption{font-size:12.5px;color:var(--muted)}
+.lb{position:fixed;inset:0;z-index:50;background:rgba(8,10,14,.97);display:grid;place-items:center;padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));overflow:auto}
+.lb img{max-width:100%;max-height:100%;object-fit:contain;touch-action:pinch-zoom}
+.lb.full img{max-width:none;max-height:none;width:200%}
+.lb .close{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:calc(10px + env(safe-area-inset-right,0px));background:#fff;color:#111;border:0;border-radius:4px;font:600 13px var(--f-ui);padding:9px 12px;cursor:pointer}
+.lb .zoom{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:calc(10px + env(safe-area-inset-left,0px));background:#fff;color:#111;border:0;border-radius:4px;font:600 13px var(--f-ui);padding:9px 12px;cursor:pointer}
+.nextbar{display:flex;justify-content:flex-end;margin-top:12px}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:6px}
+.foot{color:var(--muted);font-size:13px;margin-top:28px;border-top:1px solid var(--line);padding-top:14px}
+.foot p{margin:0 0 6px}
+.foot b{font-weight:500;color:var(--ink)}
+.perf-btn{margin-left:auto;font-family:var(--f-ui);padding:6px 10px}
+.perf{position:fixed;inset:0;z-index:47;background:var(--bg);overflow:auto;padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+.perf .in{max-width:760px;margin:0 auto}
+.perf-h{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.perf-h h2{font-family:var(--f-text);font-size:22px;margin:0;flex:1}
+.perf-me{background:var(--surface);border:1px solid var(--line);border-radius:6px;margin-bottom:14px;overflow:hidden}
+.perf-row{display:grid;grid-template-columns:1fr 92px 120px;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);font-size:14px;cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left;color:var(--ink);font-family:var(--f-ui)}
+.perf-row:hover{background:var(--accent-soft)}
+.perf-row.head{border-top:0;background:var(--accent-soft);font-weight:600;cursor:default}
+.perf-row .nm{min-width:0}
+.perf-row .ct{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.perf-bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;position:relative}
+.perf-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ok)}
+.perf-bar.low i{background:var(--bad)} .perf-bar.mid i{background:var(--mid)}
+.perf-pct{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-top:3px;text-align:right}
+.perf-note{font-size:13px;color:var(--muted);margin:0 0 14px}
+@media (max-width:520px){.perf-row{grid-template-columns:1fr 64px 84px;gap:8px;padding:9px 10px;font-size:13.5px}}
+.rep-q{margin-left:auto;font:inherit;font-family:var(--f-ui);font-size:12.5px;background:none;border:0;padding:2px 0;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.rep-q:hover{color:var(--accent)}
+.rep-q .rep-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--mid);margin-right:5px;vertical-align:1px}
+.rep-form{background:var(--accent-soft);border:1px solid var(--line);border-radius:6px;padding:12px;margin:0 0 14px;display:flex;flex-direction:column;gap:8px;font-family:var(--f-ui);font-size:14px}
+.rep-form[hidden]{display:none}
+.rep-form .rep-t{font-weight:600}
+.rep-form select,.rep-form textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;box-sizing:border-box}
+.rep-form textarea{min-height:84px;resize:vertical}
+.rep-form .rep-act{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rep-n{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--mid);color:#fff;font-size:11.5px;line-height:18px;text-align:center;margin-left:4px}
+.rep-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.rep-item{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:10px;font-family:var(--f-ui);font-size:14px}
+.rep-item .rep-meta{font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.rep-item .rep-meta b{color:var(--ink)}
+.rep-item .rep-trecho{font-size:13px;color:var(--muted);border-left:3px solid var(--line);padding-left:8px;margin:6px 0}
+.rep-item .rep-txt{white-space:pre-wrap;margin:6px 0 10px}
+.rep-item.done{opacity:.7}
+.rep-item .rep-act{display:flex;flex-wrap:wrap;gap:8px}
+sub,sup{font-size:.72em}
+@media (max-width:520px){.pager .lbl{display:none}.q{padding:18px 12px 14px}.stem{font-size:16px}.opt{font-size:15px;grid-template-columns:26px 1fr;gap:8px;padding:9px 10px}.orow{grid-template-columns:1fr 36px}.flabel{min-width:100%}}
+@media (prefers-reduced-motion:no-preference){.feedback{animation:fade .18s ease-out}@keyframes fade{from{opacity:.4}to{opacity:1}}}
+/* Resumos: link no comentário, gaveta com a seção e sobreposição com o resumo completo */
+.rs-box{margin-top:12px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:4px;padding:9px 12px;font-size:14px;background:var(--accent-soft)}
+.rs-box .rs-lab{font-weight:600;color:var(--accent);margin-right:4px}
+.rs-open{background:none;border:0;padding:0;font:inherit;color:var(--accent);text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:left}
+details.rz{font-family:var(--f-ui);margin:14px 0 0;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+details.rz summary{cursor:pointer;padding:10px 14px;font-size:14px;font-weight:500;color:var(--accent);list-style-position:inside}
+details.rz[open] summary{border-bottom:1px solid var(--line)}
+.rz-grid{display:grid;gap:2px;padding:6px}
+.rz-src{font-family:var(--f-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:8px 8px 2px}
+.rz-item{display:grid;grid-template-columns:5.8em 1fr;gap:10px;align-items:baseline;text-align:left;font:inherit;font-family:var(--f-ui);font-size:14.5px;color:var(--ink);background:none;border:0;border-radius:4px;padding:8px;cursor:pointer}
+.rz-item:hover{background:var(--accent-soft)}
+.rz-item .cap{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rz-item .chev{display:inline-block;margin-left:6px;color:var(--muted);transition:transform .15s}
+.rz-item[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.rz-item .nsub{color:var(--muted);font-size:12.5px;margin-left:6px}
+.rz-sub{display:flex;flex-direction:column;margin:0 0 6px calc(5.8em + 10px);border-left:2px solid var(--accent-soft);padding-left:6px}
+.rz-sub[hidden]{display:none}
+.rz-sub .rz-item{grid-template-columns:2em 1fr;font-size:14px;padding:6px 8px}
+.rz-sub .rz-also{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 8px 0}
+@media (max-width:560px){.rz-sub{margin-left:12px}}
+.rzs{padding:10px 10px 4px;border-bottom:1px solid var(--line)}
+.rzs input{width:100%;font:400 15px var(--f-ui);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:8px 14px;outline:none}
+.rzs input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.rzs .rzs-n{font-size:12.5px;color:var(--muted);padding:6px 4px 2px}
+.rzs-res{display:grid;gap:2px;max-height:min(62vh,560px);overflow:auto;padding:2px 0 8px}
+.rzs-hit{display:block;width:100%;text-align:left;font:inherit;font-family:var(--f-ui);background:none;border:0;border-radius:4px;padding:8px;cursor:pointer;color:var(--ink)}
+.rzs-hit:hover{background:var(--accent-soft)}
+.rzs-hit .w{font-size:12.5px;color:var(--muted);margin-bottom:2px}
+.rzs-hit .w b{color:var(--accent);font-weight:600}
+.rzs-hit .sn{font-family:var(--f-text);font-size:14px;line-height:1.45}
+.rzs-hit mark{background:#ffe48a;color:inherit;border-radius:2px;padding:0 1px}
+:root[data-theme="dark"] .rzs-hit mark{background:#6b5a16}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .rzs-hit mark{background:#6b5a16}}
+.drw-scrim{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:44}
+.drw{position:fixed;top:0;right:0;bottom:0;width:min(640px,100vw);background:var(--bg);z-index:45;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.25);border-left:1px solid var(--line)}
+.drw-h{display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;border-bottom:1px solid var(--line);background:var(--surface)}
+.drw-h .t{flex:1;min-width:0;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drw-h .t b{color:var(--ink);font-weight:600}
+.drw-b{flex:1;overflow:auto;padding:4px 18px calc(28px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+.drw-b .rz h3{margin-top:1.1rem}
+.drw-b .loading{padding:30px 0;color:var(--muted);font-size:14px}
+.full{position:fixed;inset:0;z-index:46;background:var(--bg);display:flex;flex-direction:column}
+.full iframe{flex:1;width:100%;border:0;background:var(--bg)}
+.rzrep{position:fixed;inset:0;z-index:49;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:12px}
+@media(min-width:700px){.rzrep{align-items:center}}
+.rzrep .rep-form{width:min(560px,100%);margin:0;background:var(--bg);box-shadow:0 10px 40px rgba(0,0,0,.3);padding:16px}
+.rzrep .rep-where{font-size:13px;color:var(--muted)}
+.full .fh{display:flex;justify-content:flex-end;padding:calc(6px + env(safe-area-inset-top,0px)) 10px 6px;border-bottom:1px solid var(--line);background:var(--surface)}
+body.noscroll{overflow:hidden}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <button class="tbtn" id="theme-btn" type="button" aria-label="Alternar modo claro/escuro" title="Modo claro/escuro"></button>
+    <div class="eyebrow">Estudo para TEA/TSA</div>
+    <div class="acct" id="acct"></div>
+    <h1>Banco de Questões em Anestesiologia</h1>
+    <details class="rz" id="rz"><summary>Resumos <span class="src" id="rz-n"></span></summary><div class="rzs"><input id="rzq" type="search" placeholder="Buscar em todos os resumos (ex.: Aldrete, cloroprocaína)" autocomplete="off" spellcheck="false" aria-label="Buscar em todos os resumos"><div class="rzs-n" id="rzs-n" hidden></div><div class="rzs-res" id="rzs-res"></div></div><div class="rz-grid" id="rz-links"></div></details>
+  </header>
+
+  <section class="panel" aria-label="Progresso e filtros">
+    <div class="stats" aria-live="polite">
+      <span>Respondidas <b id="s-done">0</b>/<b id="s-total">0</b></span>
+      <span>Acertos <b id="s-ok">0</b></span>
+      <span>Aproveitamento <b id="s-pct">—</b></span>
+      <span id="s-lvl"></span>
+      <button class="btn perf-btn" id="perf-btn" type="button">Desempenho por área</button>
+      <button class="btn" id="rep-btn" type="button" style="font-family:var(--f-ui);padding:6px 10px">Reportes</button>
+    </div>
+    <div class="cont" id="cont"></div>
+    <details class="filt" id="filt"><summary>Filtros e opções <span class="fsum" id="filt-sum"></span></summary><div class="fbody">
+    <div class="frow" role="group" aria-label="Área" id="f-area"><span class="flabel">Área</span></div>
+    <div class="frow" role="group" aria-label="Subtema" id="f-sub" hidden><span class="flabel">Subtema</span></div>
+    <div class="frow" role="group" aria-label="Dificuldade"><span class="flabel">Dificuldade</span>
+      <button class="chip" data-g="lvl" data-v="all" id="fd-all">Todas</button>
+      <button class="chip" data-g="lvl" data-v="1" id="fd-1">Fácil</button>
+      <button class="chip" data-g="lvl" data-v="2" id="fd-2">Médio</button>
+      <button class="chip" data-g="lvl" data-v="3" id="fd-3">Difícil</button>
+    </div>
+    <div class="frow" role="group" aria-label="Situação"><span class="flabel">Situação</span>
+      <button class="chip" data-g="st" data-v="all" id="fs-all">Todas</button>
+      <button class="chip" data-g="st" data-v="open" id="fs-open">Não respondidas</button>
+      <button class="chip" data-g="st" data-v="bad" id="fs-bad">Erradas</button>
+      <button class="chip" data-g="st" data-v="ok" id="fs-ok">Certas</button>
+      <button class="chip" data-g="st" data-v="img" id="fs-img">Com imagem</button>
+    </div>
+    <div class="frow pp" role="group" aria-label="Questões por página"><span class="flabel">Por página</span>
+      <button class="chip" data-g="pp" data-v="10">10</button>
+      <button class="chip" data-g="pp" data-v="20">20</button>
+      <button class="chip" data-g="pp" data-v="50">50</button>
+      <button class="chip" data-g="pp" data-v="100">100</button>
+    </div>
+    </div></details>
+    <details class="sheet" id="sheet"><summary>Cartão-resposta</summary>
+      <div class="grid" id="grid"></div>
+      <div class="legend">Verde: acerto · vermelho: erro · tracejado: gabarito visto sem responder. Toque num número para ir à questão.</div>
+    </details>
+  </section>
+
+  <div class="pager" id="pager-top"></div>
+  <main id="list"></main>
+  <div class="pager" id="pager-bot"></div>
+
+  <div class="qactions">
+    <button class="btn" id="btn-reset">Apagar respostas e recomeçar</button>
+    <span id="reset-confirm" class="hint" hidden>Toque de novo para confirmar.</span>
+  </div>
+
+  <footer class="foot" id="foot"></footer>
+</div>
+
+<script>
+function BOOT(Q, UID, SYNC){
+const KEY = "banco-tea-v3-" + UID, OLD = "banco-ped-tea-v2-x";
+let PAGE = 10;
+const L = ["A","B","C","D","E"], R = ["I","II","III","IV","V","VI"];
+const LV = {1:"Fácil",2:"Médio",3:"Difícil"};
+const IDX = {}; Q.forEach((q,i)=>IDX[q.id]=i);
+/* Ordem de exibição: pelo programa da SBA (ME1 → ME3, ponto a ponto), mantendo a ordem original dentro de cada ponto.
+   O ID (p001…) não muda: é ele que guarda o histórico. O número mostrado é a posição na lista filtrada. */
+const PT = q => { if (q.pp) return q.pp; const t = (q.g||[]).find(x=>/^ME\d › Ponto \d+/.test(x)); return t ? +t.match(/Ponto (\d+)/)[1] : 999; };
+const ORDER = Q.map((q,i)=>i).sort((a,b)=>PT(Q[a])-PT(Q[b]) || a-b);
+let POS = {};
+let S = {}, F = {area:"all", sub:"all", lvl:"all", st:"all"}, page = 0;
+try { S = JSON.parse(localStorage.getItem(KEY) || "null") || null; } catch(e) { S = null; }
+if (!S) { S = {}; try { const o = JSON.parse(localStorage.getItem(OLD) || "null"); if (o) { Object.keys(o).forEach(k=>{ if (/^\d+$/.test(k)) S["p"+String(+k+1).padStart(3,"0")] = o[k]; }); } } catch(e) {} }
+try { const f = JSON.parse(localStorage.getItem(KEY + "-f") || "null"); if (f) F = Object.assign(F, f); } catch(e) {}
+try { const pp = +localStorage.getItem(KEY + "-pp"); if ([10,20,50,100].includes(pp)) PAGE = pp; } catch(e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} SYNC.push(S); }
+function saveF(){ try { localStorage.setItem(KEY + "-f", JSON.stringify(F)); } catch(e) {} }
+const id = i => Q[i].id;
+const st = i => S[id(i)] || (S[id(i)] = {});
+const rec = i => S[id(i)] || {};
+const answered = i => rec(i).pick != null;
+const done = i => answered(i) || !!rec(i).seen;
+const status = i => answered(i) ? (rec(i).pick === Q[i].a ? "ok" : "bad") : (rec(i).seen ? "seen" : "open");
+const areaOf = t => t.split(" › ")[0], subOf = t => t.split(" › ")[1];
+const esc = t => t.replace(/"/g,"&quot;");
+
+const STRIKE_SVG = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 10h12"/><path d="M6.5 6.2C7 4.9 8.3 4 10 4c2 0 3.4 1.1 3.4 2.6"/><path d="M13.6 13.2c-.3 1.6-1.7 2.8-3.7 2.8-2 0-3.5-1-3.8-2.6"/></svg>';
+
+function filtered(){
+  const L0 = ORDER.filter(i=>{
+    const q = Q[i];
+    if (F.area !== "all") {
+      const tags = q.g.filter(t=>areaOf(t)===F.area);
+      if (!tags.length) return false;
+      if (F.sub !== "all" && !tags.some(t=>subOf(t)===F.sub)) return false;
+    }
+    if (F.lvl !== "all" && String(q.d) !== F.lvl) return false;
+    if (F.st === "img") return !!q.img;
+    if (F.st !== "all") { const s = status(i); if (F.st === "open" ? (s === "ok" || s === "bad") : s !== F.st) return false; }
+    return true;
+  });
+  if (F.area === "all") return L0;
+  /* com uma área escolhida, ordena pelos pontos dessa área */
+  const pa = i => { const t = Q[i].g.find(x=>areaOf(x)===F.area && /Ponto \d+/.test(x)); return t ? +t.match(/Ponto (\d+)/)[1] : 999; };
+  const pos = {}; L0.forEach((i,k)=>pos[i]=k);
+  return L0.slice().sort((a,b)=>pa(a)-pa(b) || pos[a]-pos[b]);
+}
+
+function renderFilters(){
+  const areas = {}; Q.forEach(q=>{ new Set(q.g.map(areaOf)).forEach(a=>areas[a]=(areas[a]||0)+1); });
+  const order = Object.keys(areas).sort((a,b)=>a.localeCompare(b,"pt",{numeric:true}));
+  if (F.area !== "all" && !areas[F.area]) { F.area = "all"; F.sub = "all"; saveF(); }
+  const fa = document.getElementById("f-area");
+  fa.innerHTML = `<span class="flabel">Área</span><button class="chip" data-g="area" data-v="all">Todas</button>` + order.map(a=>`<button class="chip" data-g="area" data-v="${esc(a)}">${a} <span class="src">${areas[a]}</span></button>`).join("");
+  const fs = document.getElementById("f-sub");
+  if (F.area === "all") { fs.hidden = true; fs.innerHTML = ""; }
+  else {
+    const subs = {}; Q.forEach(q=>q.g.forEach(t=>{ if (areaOf(t)===F.area) subs[subOf(t)]=(subs[subOf(t)]||0)+1; }));
+    fs.hidden = false;
+    fs.innerHTML = `<span class="flabel">Subtema</span><button class="chip" data-g="sub" data-v="all">Todos</button>` + Object.keys(subs).sort((a,b)=>a.localeCompare(b,"pt",{numeric:true})).map(t=>`<button class="chip" data-g="sub" data-v="${esc(t)}">${t.replace(/^Ponto /,"")} <span class="src">${subs[t]}</span></button>`).join("");
+    if (F.sub !== "all" && !subs[F.sub]) { F.sub = "all"; saveF(); }
+  }
+  document.querySelectorAll(".panel .chip").forEach(c=>c.setAttribute("aria-pressed", String(c.dataset.g==="pp" ? String(PAGE)===c.dataset.v : F[c.dataset.g]===c.dataset.v)));
+  const STL = {open:"não respondidas", bad:"erradas", ok:"certas", img:"com imagem"};
+  const act = [F.area!=="all" ? (F.sub!=="all" ? F.area + " › " + F.sub : F.area) : "", F.lvl!=="all" ? LV[F.lvl] : "", F.st!=="all" ? STL[F.st] : ""].filter(Boolean);
+  const fsum = document.getElementById("filt-sum"); if (fsum) fsum.textContent = "· " + (act.length ? act.join(" · ") : "todas as questões") + " · " + PAGE + " por página";
+}
+
+function qHTML(i){
+  const q = Q[i], n = String(POS[i]!=null?POS[i]+1:i+1);
+  let h = `<div class="q-head"><span class="q-num" title="Código ${q.id}">Questão ${n}</span><span class="lvl d${q.d}" id="lv${i}" hidden>${LV[q.d]}</span><span class="src" id="sr${i}" hidden>${q.src}</span><button class="rep-q" id="rq${i}" data-q="${i}" type="button" title="Reportar um erro nesta questão">${repOpenFor(q.id)?'<span class="rep-dot" title="Há reporte aberto"></span>':""}Reportar erro</button></div>`;
+  h += `<form class="rep-form" id="rf${i}" data-q="${i}" hidden><div class="rep-t">Reportar erro na questão ${n}</div>
+    <select name="tipo" aria-label="Tipo de problema"><option>Enunciado ou alternativas</option><option>Gabarito</option><option>Comentário ou explicação</option><option>Resumo ou link do resumo</option><option>Imagem</option><option>Tags ou fonte</option><option>Outro</option></select>
+    <textarea name="texto" required placeholder="O que está errado ou confuso? (ex.: o enunciado cita uma tabela do livro que não aparece aqui)"></textarea>
+    <div class="rep-act"><button class="btn primary rep-send" type="submit">Enviar reporte</button><button class="btn ghost rep-cancel" type="button">Cancelar</button><span class="hint rep-msg"></span></div></form>`;
+  h += `<div class="qtags" id="tg${i}" hidden>` + q.g.map(t=>`<button class="qtag" data-t="${esc(t)}" title="Filtrar por este subtema">${t}</button>`).join("") + `</div>`;
+  h += `<p class="stem">${q.s}</p>`;
+  if (q.img) h += `<figure class="qimg"><button class="zoomimg" data-src="${q.img}" aria-label="Ampliar imagem"><img src="${q.img}" alt="${esc(q.ic||"Imagem da questão")}" loading="lazy"></button>${q.ic?`<figcaption>${q.ic} Toque para ampliar.</figcaption>`:""}</figure>`;
+  if (q.i) h += `<ol class="items${q.corr?" corr":""}">` + q.i.map((it,k)=>`<li>${q.corr?"":`<span class="rn">${R[k]}.</span>`}<span>${it[0]}</span></li>`).join("") + `</ol>`;
+  h += `<ul class="opts">` + q.o.map((o,k)=>`<li class="orow"><button class="opt" id="o${i}-${k}" data-q="${i}" data-k="${k}"><span class="letter">${L[k]}</span><span class="otext">${o[0]}</span></button><button class="strike" id="x${i}-${k}" data-q="${i}" data-k="${k}" aria-pressed="false" aria-label="Riscar alternativa ${L[k]}" title="Riscar alternativa">${STRIKE_SVG}</button></li>`).join("") + `</ul>`;
+  h += `<div class="qactions"><button class="btn primary" id="go${i}" data-q="${i}" disabled>Responder</button><button class="btn ghost" id="sk${i}" data-q="${i}">Ver gabarito sem responder</button><span class="hint" id="hn${i}"></span></div><div class="fb"></div>`;
+  return h;
+}
+
+function paint(i){
+  const sec = document.getElementById("q"+i); if (!sec) return;
+  const q = Q[i], s = rec(i), d = done(i), strikes = s.x || [];
+  document.getElementById("lv"+i).hidden = !d;
+  document.getElementById("sr"+i).hidden = !d; document.getElementById("tg"+i).hidden = !d;
+  q.o.forEach((o,k)=>{
+    const b = document.getElementById(`o${i}-${k}`), x = document.getElementById(`x${i}-${k}`);
+    b.className = "opt"; b.disabled = d; x.disabled = d;
+    const struck = strikes.includes(k);
+    x.setAttribute("aria-pressed", String(struck));
+    if (struck) b.classList.add("struck");
+    if (d) {
+      if (k === q.a) b.classList.add("right");
+      else if (answered(i) && k === s.pick) b.classList.add("wrong");
+      else b.classList.add("faded");
+    } else if (s.sel === k) b.classList.add("sel");
+  });
+  const go = document.getElementById("go"+i), sk = document.getElementById("sk"+i), hn = document.getElementById("hn"+i);
+  go.hidden = sk.hidden = d; go.disabled = s.sel == null;
+  hn.textContent = (!d && s.sel != null) ? `Marcada: ${L[s.sel]}` : "";
+  sec.querySelector(".fb").innerHTML = d ? fbHTML(i) : "";
+}
+
+function fbHTML(i){
+  const q = Q[i], s = rec(i);
+  let v;
+  if (!answered(i)) v = `<p class="verdict neutral">Gabarito: ${L[q.a]}</p>`;
+  else v = s.pick === q.a ? `<p class="verdict ok">Você acertou. Gabarito: ${L[q.a]}</p>` : `<p class="verdict bad">Você marcou ${L[s.pick]}. Gabarito: ${L[q.a]}</p>`;
+  let h = `<div class="feedback">${v}`;
+  if (q.ctx) h += `<div class="ctx"><b>Contexto.</b> ${q.ctx}</div>`;
+  if (q.i) {
+    h += `<div class="fb-title">${q.corr ? "Análise dos itens" : "Análise das afirmativas"}</div>`;
+    h += q.i.map((it,k)=>{
+      const c = it[2].replace(/^(Verdadeira|Falsa)\.\s*/,"");
+      if (q.corr) return `<div class="cm"><span class="letter">${k+1}</span><p>${c}</p></div>`;
+      return `<div class="cm ${it[1]?"is-ok":"is-bad"}"><span class="letter">${R[k]}</span><p><span class="st">${it[1]?"Verdadeira.":"Falsa."}</span> ${c}</p></div>`;
+    }).join("");
+  }
+  h += `<div class="fb-title">Comentário das alternativas</div>`;
+  h += q.o.map((o,k)=>{
+    const good = k === q.a;
+    const lab = q.neg ? (good ? "Gabarito." : "Afirmativa verdadeira.") : (good ? "Correta." : "Incorreta.");
+    return `<div class="cm ${good?"is-ok":"is-bad"}"><span class="letter">${L[k]}</span><p><span class="st">${lab}</span> ${o[1].replace(/^(Correta|Incorreta)\.\s*/,"")}</p></div>`;
+  }).join("");
+  h += (q.k?`<div class="key"><b>Conceito-chave.</b> ${q.k}</div>`:"") + `<p class="ref">Referência: ${q.rb||"Miller's Anesthesia, 10ª ed."} — ${q.r}</p>`;
+  if (q.rs && q.rs.length) h += `<div class="rs-box"><span class="rs-lab">Revisar no resumo:</span> ${q.rs.map(r=>`<button class="rs-open" data-f="${r[0]}" data-s="${r[1]}">${r[2]}</button>`).join(" · ")}</div>`;
+  h += `<div class="nextbar"><button class="btn primary next-open" data-q="${i}">Próxima não respondida →</button></div></div>`;
+  return h;
+}
+
+function renderList(scrollTop){
+  renderFilters();
+  const ids = filtered(), pages = Math.max(1, Math.ceil(ids.length / PAGE));
+  POS = {}; ids.forEach((i,k)=>POS[i]=k);
+  if (page >= pages) page = pages - 1; if (page < 0) page = 0;
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  if (!ids.length) list.innerHTML = `<div class="empty">Nenhuma questão com esses filtros.</div>`;
+  ids.slice(page*PAGE, page*PAGE+PAGE).forEach(i=>{
+    const sec = document.createElement("section"); sec.className = "q"; sec.id = "q"+i; sec.innerHTML = qHTML(i);
+    list.appendChild(sec); paint(i);
+  });
+  ["pager-top","pager-bot"].forEach(id=>{
+    const el = document.getElementById(id);
+    const from = ids.length ? page*PAGE+1 : 0, to = Math.min(ids.length, page*PAGE+PAGE);
+    const a = page===0?"disabled":"", z = page>=pages-1?"disabled":"";
+    el.innerHTML = `<div class="pg"><button class="btn" data-p="first" ${a} aria-label="Primeira página" title="Primeira página">«</button><button class="btn" data-p="-1" ${a} aria-label="Página anterior">←<span class="lbl"> Anterior</span></button></div><span>${from}–${to} de ${ids.length}<br><span class="src">página ${page+1} de ${pages}</span></span><div class="pg"><button class="btn" data-p="1" ${z} aria-label="Próxima página"><span class="lbl">Próxima </span>→</button><button class="btn" data-p="last" ${z} aria-label="Última página" title="Última página">»</button></div>`;
+  });
+  renderGrid(ids); updateStats();
+  if (scrollTop) document.getElementById("pager-top").scrollIntoView({block:"start"});
+}
+
+function goTo(i){
+  const ids = filtered(); let pos = ids.indexOf(i);
+  if (pos < 0) { F = {area:"all", sub:"all", lvl:"all", st:"all"}; saveF(); return goTo(i); }
+  page = Math.floor(pos/PAGE); renderList(false);
+  const el = document.getElementById("q"+i); if (el) el.scrollIntoView({block:"start"});
+}
+
+function nextOpen(from){
+  const all = filtered(), p0 = all.indexOf(from);
+  const ids = all.filter(i=>!done(i));
+  if (!ids.length) return null;
+  const after = ids.find(i=>all.indexOf(i) > p0);
+  return after != null ? after : ids[0];
+}
+
+function renderCont(){
+  const el = document.getElementById("cont");
+  const n = Q.filter((q,i)=>done(i)).length;
+  const last = S._last != null && IDX[S._last] != null ? IDX[S._last] : -1;
+  const nx = nextOpen(last);
+  if (!n) { el.innerHTML = `<span class="hint">Comece pela questão 1 ou escolha uma área abaixo.</span>`; return; }
+  el.innerHTML = nx == null ? `<span class="hint">Você já passou por todas as questões deste filtro.</span>`
+    : `<button class="btn primary" id="btn-cont">Continuar de onde parei → questão ${filtered().indexOf(nx)+1}</button><span class="hint">Abre a próxima não respondida, respeitando os filtros.</span>`;
+}
+
+function renderGrid(ids){
+  const g = document.getElementById("grid"); g.innerHTML = "";
+  ids.forEach((i,k)=>{
+    const c = document.createElement("button"); const s = status(i);
+    c.className = "cell" + (s==="ok"?" ok":s==="bad"?" bad":s==="seen"?" seen":"");
+    c.textContent = k+1; c.id = "c"+i; c.setAttribute("aria-label","Ir para a questão "+(k+1));
+    c.addEventListener("click",()=>goTo(i));
+    g.appendChild(c);
+  });
+}
+
+function updateStats(){
+  let n=0, ok=0; const by={1:[0,0],2:[0,0],3:[0,0]};
+  Q.forEach((q,i)=>{ if (answered(i)) { n++; by[q.d][0]++; if (rec(i).pick===q.a){ ok++; by[q.d][1]++; } } });
+  document.getElementById("s-done").textContent = n;
+  document.getElementById("s-total").textContent = Q.length;
+  document.getElementById("s-ok").textContent = ok;
+  document.getElementById("s-pct").textContent = n ? Math.round(100*ok/n)+"%" : "—";
+  document.getElementById("s-lvl").textContent = [1,2,3].filter(d=>by[d][0]).map(d=>`${LV[d]} ${by[d][1]}/${by[d][0]}`).join(" · ");
+  renderCont();
+}
+
+function refreshCell(i){
+  const c = document.getElementById("c"+i); if (!c) return; const s = status(i);
+  c.className = "cell" + (s==="ok"?" ok":s==="bad"?" bad":s==="seen"?" seen":"");
+}
+
+function openLB(src){
+  const lb = document.createElement("div"); lb.className = "lb"; lb.setAttribute("role","dialog"); lb.setAttribute("aria-label","Imagem ampliada");
+  lb.innerHTML = `<img src="${src}" alt=""><button class="zoom">Zoom 2×</button><button class="close">Fechar ✕</button>`;
+  lb.addEventListener("click", e=>{ if (e.target.closest(".zoom")) { lb.classList.toggle("full"); e.target.textContent = lb.classList.contains("full") ? "Ajustar à tela" : "Zoom 2×"; return; } if (e.target === lb || e.target.closest(".close")) lb.remove(); });
+  document.addEventListener("keydown", function k(e){ if (e.key==="Escape"){ lb.remove(); document.removeEventListener("keydown",k);} });
+  document.body.appendChild(lb); lb.querySelector(".close").focus();
+}
+
+document.getElementById("list").addEventListener("click", e=>{
+  const rq = e.target.closest(".rep-q");
+  if (rq) { const f = document.getElementById("rf"+rq.dataset.q); f.hidden = !f.hidden; if (!f.hidden) { f.querySelector(".rep-msg").textContent = ""; f.querySelector("textarea").focus(); } return; }
+  const rf = e.target.closest(".rep-form");
+  if (rf) { if (e.target.closest(".rep-cancel")) rf.hidden = true; return; }
+  const o = e.target.closest(".opt"), x = e.target.closest(".strike"), go = e.target.closest(".btn.primary:not(.next-open)"), sk = e.target.closest(".btn.ghost"),
+        nx = e.target.closest(".next-open"), tg = e.target.closest(".qtag"), zi = e.target.closest(".zoomimg");
+  if (zi) { openLB(zi.dataset.src); return; }
+  const ro = e.target.closest(".rs-open"); if (ro) { openRS(ro.dataset.f, ro.dataset.s); return; }
+  if (tg) { const t = tg.dataset.t; F.area = areaOf(t); F.sub = subOf(t); F.st = "all"; F.lvl = "all"; saveF(); page = 0; renderList(true); return; }
+  if (nx) { const n = nextOpen(+nx.dataset.q); if (n != null) goTo(n); else nx.replaceWith(Object.assign(document.createElement("span"),{className:"hint",textContent:"Não há mais questões não respondidas neste filtro."})); return; }
+  if (o && !o.disabled) {
+    const i = +o.dataset.q, k = +o.dataset.k, s = st(i);
+    s.sel = s.sel === k ? null : k;
+    if (s.x && s.sel === k) s.x = s.x.filter(v=>v!==k);
+    save(); paint(i);
+  } else if (x && !x.disabled) {
+    const i = +x.dataset.q, k = +x.dataset.k, s = st(i);
+    s.x = s.x || [];
+    if (s.x.includes(k)) s.x = s.x.filter(v=>v!==k); else { s.x.push(k); if (s.sel === k) s.sel = null; }
+    save(); paint(i);
+  } else if (go && !go.disabled) {
+    const i = +go.dataset.q, s = st(i);
+    if (s.sel == null) return;
+    s.pick = s.sel; S._last = id(i); save(); paint(i); refreshCell(i); updateStats();
+  } else if (sk) {
+    const i = +sk.dataset.q; st(i).seen = true; S._last = id(i); save(); paint(i); refreshCell(i); updateStats();
+  }
+});
+document.querySelector(".panel").addEventListener("click", e=>{
+  const c = e.target.closest(".chip");
+  if (c && c.dataset.g === "pp") { const first = page*PAGE; PAGE = +c.dataset.v; try { localStorage.setItem(KEY + "-pp", String(PAGE)); } catch(e) {} page = Math.floor(first/PAGE); renderList(false); return; }
+  if (c) { F[c.dataset.g] = c.dataset.v; if (c.dataset.g === "area") F.sub = "all"; saveF(); page = 0; renderList(false); return; }
+  if (e.target.closest("#btn-cont")) { const last = S._last != null && IDX[S._last] != null ? IDX[S._last] : -1; const n = nextOpen(last); if (n != null) goTo(n); }
+});
+["pager-top","pager-bot"].forEach(id=>document.getElementById(id).addEventListener("click", e=>{
+  const b = e.target.closest("button[data-p]"); if (!b || b.disabled) return; const v = b.dataset.p;
+  page = v === "first" ? 0 : v === "last" ? 1e9 : page + (+v); renderList(true);
+}));
+/* ---------- Desempenho por área (ME › ponto) ---------- */
+function openPerf(){
+  const agg = {};
+  Q.forEach((q,i)=>{ q.g.forEach(t=>{ const a = areaOf(t), s = subOf(t);
+    const A = agg[a] || (agg[a] = {n:0, r:0, ok:0, subs:{}, seen:new Set()});
+    if (!A.seen.has(i)) { A.seen.add(i); A.n++; if (answered(i)) { A.r++; if (rec(i).pick===q.a) A.ok++; } }
+    const S2 = A.subs[s] || (A.subs[s] = {n:0, r:0, ok:0}); S2.n++; if (answered(i)) { S2.r++; if (rec(i).pick===q.a) S2.ok++; } }); });
+  const bar = (r, ok) => { if (!r) return `<div class="perf-bar"></div><div class="perf-pct">—</div>`; const p = Math.round(100*ok/r);
+    return `<div class="perf-bar ${p<50?"low":p<70?"mid":""}"><i style="width:${p}%"></i></div><div class="perf-pct">${p}% (${ok}/${r})</div>`; };
+  let h = `<div class="in"><div class="perf-h"><h2>Desempenho por área</h2><button class="btn" id="perf-x">Fechar ✕</button></div>
+    <p class="perf-note">Por ano de especialização e ponto do programa da SBA. A coluna do meio mostra respondidas/total. Toque num ponto para filtrar as questões dele.</p>`;
+  Object.keys(agg).sort((a,b)=>a.localeCompare(b,"pt",{numeric:true})).forEach(a=>{ const A = agg[a];
+    h += `<div class="perf-me"><div class="perf-row head"><span class="nm">${a}</span><span class="ct">${A.r}/${A.n}</span><span>${bar(A.r,A.ok)}</span></div>`;
+    Object.keys(A.subs).sort((x,y)=>x.localeCompare(y,"pt",{numeric:true})).forEach(s=>{ const S2 = A.subs[s];
+      h += `<button class="perf-row" data-a="${esc(a)}" data-s="${esc(s)}"><span class="nm">${s}</span><span class="ct">${S2.r}/${S2.n}</span><span>${bar(S2.r,S2.ok)}</span></button>`; });
+    h += `</div>`; });
+  h += `</div>`;
+  const o = document.createElement("div"); o.className = "perf"; o.setAttribute("role","dialog"); o.setAttribute("aria-label","Desempenho por área"); o.innerHTML = h;
+  o.addEventListener("click", e=>{ if (e.target.closest("#perf-x")) { o.remove(); document.body.classList.remove("noscroll"); return; }
+    const r = e.target.closest(".perf-row[data-a]"); if (!r) return;
+    F.area = r.dataset.a; F.sub = r.dataset.s; F.st = "all"; F.lvl = "all"; saveF(); page = 0; o.remove(); document.body.classList.remove("noscroll"); renderList(true); });
+  document.body.appendChild(o); document.body.classList.add("noscroll"); o.querySelector("#perf-x").focus();
+}
+document.getElementById("perf-btn").addEventListener("click", openPerf);
+(function(){ const d = document.getElementById("filt"); try { if (localStorage.getItem(KEY + "-filt") === "1") d.open = true; } catch(e) {}
+  d.addEventListener("toggle", ()=>{ try { localStorage.setItem(KEY + "-filt", d.open ? "1" : "0"); } catch(e) {} }); })();
+document.addEventListener("keydown", e=>{ if (e.key==="Escape") { const o = document.querySelector(".perf"); if (o) { o.remove(); document.body.classList.remove("noscroll"); } } });
+
+/* ---------- Reportar erro ----------
+   No app (login), window.REPORTES vem do shell e grava no Supabase (tabela "reportes"),
+   visível para todos os usuários. Fora do app, os reportes ficam neste navegador. */
+const REP = window.REPORTES || (function(){
+  const K = "banco-tea-reportes";
+  const all = ()=>{ try { return JSON.parse(localStorage.getItem(K) || "[]"); } catch(e) { return []; } };
+  const put = a=>{ try { localStorage.setItem(K, JSON.stringify(a)); } catch(e) {} };
+  return { local: true,
+    async add(r){ const a = all(); a.push(Object.assign({id: Date.now(), criado: new Date().toISOString(), status: "aberto", autor: "este navegador"}, r)); put(a); return {ok: true}; },
+    async list(){ return all().slice().reverse(); },
+    async update(id, patch){ put(all().map(r=>r.id===id ? Object.assign(r, patch) : r)); } };
+})();
+let REPS = [];
+function repOpenFor(qid){ return REPS.some(r=>r.qid===qid && r.status!=="resolvido"); }
+function paintRepBtn(){ const b = document.getElementById("rep-btn"); if (!b) return; const n = REPS.filter(r=>r.status!=="resolvido").length; b.innerHTML = "Reportes" + (n ? `<span class="rep-n">${n}</span>` : ""); }
+async function loadReps(){ try { REPS = (await REP.list()) || []; } catch(e) { REPS = []; } paintRepBtn();
+  document.querySelectorAll(".rep-q").forEach(b=>{ const q = Q[+b.dataset.q]; const has = repOpenFor(q.id); const dot = b.querySelector(".rep-dot"); if (has && !dot) b.insertAdjacentHTML("afterbegin",'<span class="rep-dot" title="Há reporte aberto"></span>'); if (!has && dot) dot.remove(); }); }
+const plain = h => { const d = document.createElement("div"); d.innerHTML = h; return (d.textContent || "").replace(/\s+/g," ").trim(); };
+const escH = t => String(t==null?"":t).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+document.getElementById("list").addEventListener("submit", async e=>{
+  const f = e.target.closest(".rep-form"); if (!f) return; e.preventDefault();
+  const i = +f.dataset.q, q = Q[i], txt = f.texto.value.trim(), msg = f.querySelector(".rep-msg"), btn = f.querySelector(".rep-send");
+  if (!txt) { msg.textContent = "Descreva o problema."; return; }
+  btn.disabled = true; msg.textContent = "Enviando…";
+  let r; try { r = await REP.add({qid: q.id, num: i+1, tipo: f.tipo.value, texto: txt, trecho: plain(q.s).slice(0,160)}); } catch(err) { r = {ok:false}; }
+  btn.disabled = false;
+  if (r && r.ok) { msg.textContent = "Reporte enviado. Obrigado!"; f.texto.value = ""; setTimeout(()=>{ f.hidden = true; }, 1400); }
+  else if (r && r.pend) { msg.textContent = "Salvo neste aparelho; será enviado assim que possível."; f.texto.value = ""; setTimeout(()=>{ f.hidden = true; }, 2200); }
+  else { msg.textContent = "Não foi possível enviar agora. Tente de novo."; return; }
+  loadReps();
+});
+let repTab = "aberto";
+function openReps(){
+  const old = document.querySelector(".perf"); if (old) old.remove();
+  const o = document.createElement("div"); o.className = "perf"; o.setAttribute("role","dialog"); o.setAttribute("aria-label","Reportes de erro");
+  const draw = ()=>{
+    const list = REPS.filter(r=>repTab==="todos" || (repTab==="resolvido" ? r.status==="resolvido" : r.status!=="resolvido"));
+    const nA = REPS.filter(r=>r.status!=="resolvido").length, nR = REPS.length - nA;
+    let h = `<div class="in"><div class="perf-h"><h2>Reportes de erro</h2><button class="btn" id="perf-x">Fechar ✕</button></div>
+      <p class="perf-note">Erros apontados ${REP.local ? "neste navegador" : "pelos usuários"} nas questões e nos resumos. Use “Ir para a questão” para conferir e “Marcar como resolvido” depois de corrigir. “Copiar abertos” gera um texto para colar numa conversa com o Claude.</p>
+      <div class="rep-tabs"><button class="chip" data-t="aberto" aria-pressed="${repTab==="aberto"}">Abertos <span class="src">${nA}</span></button><button class="chip" data-t="resolvido" aria-pressed="${repTab==="resolvido"}">Resolvidos <span class="src">${nR}</span></button><button class="chip" data-t="todos" aria-pressed="${repTab==="todos"}">Todos</button><button class="btn" id="rep-copy" type="button" style="margin-left:auto">Copiar abertos</button><span class="hint" id="rep-cm"></span></div>`;
+    if (!list.length) h += `<div class="empty">Nenhum reporte aqui.</div>`;
+    list.forEach(r=>{ const qi = IDX[r.qid]; const dt = r.criado ? new Date(r.criado).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}) : "";
+      h += `<div class="rep-item${r.status==="resolvido"?" done":""}"><div class="rep-meta"><b>${r.qid==="rz"?"Resumo":"Código "+escH(r.qid)}</b> · ${escH(r.tipo)} · ${escH(r.autor||"")} · ${dt}${r.pend?" · envio pendente":""}${r.status==="resolvido"?" · resolvido":""}</div>
+        ${r.trecho?`<div class="rep-trecho">${escH(r.trecho)}…</div>`:""}<div class="rep-txt">${escH(r.texto)}</div>${r.resposta?`<div class="rep-trecho"><b>Resposta:</b> ${escH(r.resposta)}</div>`:""}
+        <div class="rep-act">${qi!=null?`<button class="btn" data-go="${qi}">Ir para a questão</button>`:""}${r.qid==="rz"&&/\[([^\]#]+)(#[^\]]*)?\]$/.test(r.trecho||"")?`<button class="btn" data-rz="${escH((r.trecho.match(/\[([^\]]+)\]$/)||[])[1])}">Abrir o resumo</button>`:""}${r.pend?"":`<button class="btn ghost" data-st="${escH(r.id)}">${r.status==="resolvido"?"Reabrir":"Marcar como resolvido"}</button>`}</div></div>`; });
+    o.innerHTML = h + `</div>`;
+  };
+  o.addEventListener("click", async e=>{
+    const close = ()=>{ o.remove(); document.body.classList.remove("noscroll"); };
+    if (e.target.closest("#perf-x")) { close(); return; }
+    const t = e.target.closest("[data-t]"); if (t) { repTab = t.dataset.t; draw(); return; }
+    const g = e.target.closest("[data-go]"); if (g) { close(); goTo(+g.dataset.go); return; }
+    const z = e.target.closest("[data-rz]"); if (z) { close(); const [zf, zs] = z.dataset.rz.split("#"); openFull(zf, zs||""); return; }
+    if (e.target.closest("#rep-copy")) {
+      const ab = REPS.filter(r=>r.status!=="resolvido");
+      const txt = "Reportes abertos no banco de questões (" + ab.length + "):\n\n" + ab.map(r=>`- ${r.qid==="rz"?"resumo":r.qid+" (questão "+(IDX[r.qid]!=null?IDX[r.qid]+1:r.num)+")"} · ${r.tipo} · ${r.autor||""}: ${r.texto}\n  Trecho: ${r.trecho||""}`).join("\n");
+      let ok = false; try { await navigator.clipboard.writeText(txt); ok = true; } catch(_) {}
+      o.querySelector("#rep-cm").textContent = ok ? "Copiado." : "Não deu para copiar neste navegador.";
+      return; }
+    const s = e.target.closest("[data-st]"); if (s) {
+      const r = REPS.find(x=>String(x.id)===s.dataset.st); if (!r) return;
+      const novo = r.status==="resolvido" ? "aberto" : "resolvido";
+      s.disabled = true;
+      try { await REP.update(r.id, {status: novo, resolvido_em: novo==="resolvido" ? new Date().toISOString() : null}); r.status = novo; } catch(err) { s.disabled = false; return; }
+      paintRepBtn(); draw(); loadReps();
+    }
+  });
+  draw(); document.body.appendChild(o); document.body.classList.add("noscroll"); o.querySelector("#perf-x").focus();
+  loadReps().then(()=>{ if (o.isConnected) draw(); });
+}
+document.getElementById("rep-btn").addEventListener("click", openReps);
+setTimeout(loadReps, 0);
+
+let armed = false;
+document.getElementById("btn-reset").addEventListener("click", ()=>{
+  const m = document.getElementById("reset-confirm");
+  if (!armed) { armed = true; m.hidden = false; setTimeout(()=>{ armed=false; m.hidden=true; }, 4000); return; }
+  armed = false; m.hidden = true; S = {}; save(); page = 0; renderList(true);
+});
+
+/* ---------- Tema claro/escuro ---------- */
+const THEME_KEY = "banco-tema";
+const ICON_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+const ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+function effTheme(){ const a = document.documentElement.getAttribute("data-theme"); if (a==="dark"||a==="light") return a; return (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light"; }
+function paintThemeBtn(){ const b = document.getElementById("theme-btn"); if (!b) return; const d = effTheme()==="dark"; b.innerHTML = d ? ICON_SUN : ICON_MOON; b.title = d ? "Modo claro" : "Modo noturno"; }
+function setTheme(t, save){
+  document.documentElement.setAttribute("data-theme", t);
+  if (save) { try { localStorage.setItem(THEME_KEY, t); } catch(_){} }
+  paintThemeBtn();
+  document.querySelectorAll(".full iframe").forEach(f=>{ try { f.contentWindow.postMessage({type:"theme", theme:t}, "*"); } catch(_){} });
+}
+(function(){
+  let t = null; try { t = localStorage.getItem(THEME_KEY); } catch(_){}
+  if (t==="dark"||t==="light") document.documentElement.setAttribute("data-theme", t);
+  paintThemeBtn();
+  const b = document.getElementById("theme-btn"); if (b) b.onclick = ()=> setTheme(effTheme()==="dark" ? "light" : "dark", true);
+  if (window.matchMedia) { const mq = matchMedia("(prefers-color-scheme: dark)"); const f = ()=>paintThemeBtn(); mq.addEventListener ? mq.addEventListener("change", f) : mq.addListener && mq.addListener(f); }
+})();
+
+/* ---------- Resumos ---------- */
+/* Resumos: [arquivo, [pontos do programa], título], gerada do resumos/cadastro.py pelo build. A lista aparece agrupada por ME e ponto. */
+const RZLIST = [
+  ["via-aerea-adulto",[5],"Manejo da via aérea no adulto"],
+  ["anestesia-neuraxial",[17],"Raquianestesia, peridural e caudal"],
+  ["anestesia-ambulatorial",[36],"Anestesia ambulatorial"],
+  ["anestesia-fora-cc",[49],"Anestesia fora do centro cirúrgico"],
+  ["anestesia-toracica",[41],"Anestesia para cirurgia torácica"],
+  ["anestesia-bucomaxilofacial",[40],"Anestesia para cirurgia bucomaxilofacial"],
+  ["anestesia-pediatrica",[47],"Anestesia pediátrica"],
+  ["anestesia-regional-pediatrica",[47],"Anestesia regional pediátrica"],
+  ["terapia-intensiva-pediatrica",[47],"Terapia intensiva pediátrica e neonatal"],
+  ["anestesia-transplantes",[48],"Anestesia para transplantes de órgãos"],
+  ["dor-aguda",[50],"Dor aguda pós-operatória e inflamação"],
+  ["dor-cronica",[51],"Dor crônica"],
+  ["ventilacao-mecanica",[52],"Suporte ventilatório e ventilação mecânica"],
+  ["anestesia-trauma",[38],"Anestesia no trauma e em urgências"],
+  ["anestesia-plastica",[39],"Anestesia para cirurgia plástica e queimados"],
+  ["bloqueios-perifericos",[25],"Bloqueios periféricos"],
+  ["anestesia-ortopedia",[32],"Anestesia em ortopedia"],
+  ["gerenciamento-centro-cirurgico",[54],"Gerenciamento do centro cirúrgico"],
+  ["qualidade-seguranca",[53],"Qualidade e segurança em anestesia"],
+  ["cardiopata-cirurgia-nao-cardiaca",[42],"O cardiopata em cirurgia não cardíaca"],
+  ["cirurgia-cardiaca-adulto",[42],"Cirurgia cardíaca do adulto: revascularização, valvas, proteção miocárdica e ETE"],
+  ["cec-ecmo-assistencia",[42],"CEC, ECMO, assistência circulatória e transplante cardíaco"],
+  ["arritmias-hemodinamica",[42],"Arritmias, marca-passo/CDI, eletrofisiologia e sala de hemodinâmica"],
+  ["aorta-vascular",[42],"Aorta torácica e abdominal, carótida e cirurgia vascular periférica"],
+  ["cardiopatias-congenitas",[42,47],"Cardiopatias congênitas: fisiologia, cirurgia, CEC pediátrica e o adulto congênito"],
+  ["neurofisiologia-neuroanestesia",[43],"Neurofisiologia, PIC, fármacos, proteção cerebral e monitorização neurológica"],
+  ["anestesia-neurocirurgia",[43,47],"Anestesia para neurocirurgia: craniotomias, posição sentada, vascular, TCE, coluna, hipófise e pediatria"],
+  ["choque-fisiopatologia-monitorizacao",[45,21],"Choque: fisiopatologia, oxigenação tecidual, monitorização e tratamento geral"],
+  ["choque-hipovolemico-cardiogenico-obstrutivo",[45,38],"Choque hipovolêmico e hemorrágico, cardiogênico, obstrutivo e neurogênico"],
+  ["sepse-choque-distributivo",[45],"SIRS, sepse, choque séptico, anafilático e SDMOS"],
+  ["anestesia-geriatrica",[46],"Anestesia em geriatria"],
+  ["hipotermia-hipotensao-induzida",[44],"Hipotermia e hipotensão arterial induzida"],
+  ["anestesia-endocrino",[37],"Anestesia e sistema endócrino"]
+];
+const RESUMOS = {}; RZLIST.forEach(r=>RESUMOS[r[0]] = r[2]);
+const RZ = {};
+function loadRZ(f){
+  if (!RZ[f]) RZ[f] = window.APP.resumo(f)
+    .then(t=>new DOMParser().parseFromString(t,"text/html")).catch(e=>{ delete RZ[f]; throw e; });
+  return RZ[f];
+}
+function closeRS(){ document.querySelectorAll(".drw,.drw-scrim").forEach(x=>x.remove()); if (!document.querySelector(".full")) document.body.classList.remove("noscroll"); }
+function openRS(f, sec){
+  closeRS();
+  const scrim = Object.assign(document.createElement("div"),{className:"drw-scrim"});
+  const d = document.createElement("aside"); d.className = "drw"; d.setAttribute("role","dialog"); d.setAttribute("aria-label","Trecho do resumo");
+  d.innerHTML = `<div class="drw-h"><span class="t">Resumo · <b>${RESUMOS[f]||f}</b></span><button class="btn rs-rep" title="Reportar erro neste trecho do resumo">Reportar</button><button class="btn rs-full">Resumo completo</button><button class="btn rs-x" aria-label="Fechar">✕</button></div><div class="drw-b"><div class="loading">Carregando…</div></div>`;
+  document.body.append(scrim, d); document.body.classList.add("noscroll");
+  scrim.onclick = closeRS;
+  d.querySelector(".rs-x").onclick = closeRS;
+  d.querySelector(".rs-full").onclick = ()=>{ closeRS(); openFull(f, sec); };
+  d.querySelector(".rs-rep").onclick = ()=>{ const h = d.querySelector(".drw-b h3"); openRzRep(f, sec, h ? h.textContent : ""); };
+  d.querySelector(".drw-b").addEventListener("click", e=>{
+    const im = e.target.closest("figure img"); if (im) { openLB(im.getAttribute("src")); return; }
+    const a = e.target.closest("a[href^='#']"); if (a) { e.preventDefault(); openRS(f, a.getAttribute("href").slice(1)); return; }
+    const x = e.target.closest("a[href*='.html']"); if (x) { e.preventDefault(); const [pth, h] = x.getAttribute("href").split("#"); closeRS(); openFull(pth.replace(/^.*\//,"").replace(/\.html$/,""), h||""); }
+  });
+  loadRZ(f).then(doc=>{
+    const s = doc.getElementById(sec); const b = d.querySelector(".drw-b"); if (!b.isConnected) return;
+    if (!s) { b.innerHTML = `<p class="loading">Seção não encontrada.</p>`; return; }
+    const c = s.cloneNode(true); c.removeAttribute("id");
+    c.querySelectorAll("img").forEach(im=>{ const v = im.getAttribute("src")||""; if (v.startsWith("../")) im.setAttribute("src", v.slice(3)); im.removeAttribute("loading"); });
+    const w = document.createElement("div"); w.className = "rz"; w.appendChild(c);
+    b.innerHTML = ""; b.appendChild(w); b.scrollTop = 0;
+  }).catch(()=>{ closeRS(); openFull(f, sec); });
+  document.addEventListener("keydown", function k(e){ if (e.key==="Escape" && !document.querySelector(".lb")){ closeRS(); document.removeEventListener("keydown",k);} });
+}
+function closeFull(){ document.querySelectorAll(".full").forEach(x=>x.remove()); if (!document.querySelector(".drw")) document.body.classList.remove("noscroll"); }
+let FULLF = "";
+let RZQ = "";
+function openFull(f, sec){
+  const q = RZQ; RZQ = "";
+  closeFull(); FULLF = f;
+  const o = document.createElement("div"); o.className = "full"; o.setAttribute("role","dialog"); o.setAttribute("aria-label","Resumo completo");
+  o.innerHTML = `<div class="loading" style="padding:24px">Carregando resumo…</div>`;
+  document.body.appendChild(o); document.body.classList.add("noscroll");
+  window.APP.resumoURL(f).then(url=>{
+    if (!o.isConnected) return;
+    o.innerHTML = `<iframe title="${RESUMOS[f]||f}"></iframe>`;
+    const fr = o.querySelector("iframe");
+    fr.addEventListener("load", ()=>{
+      try { fr.contentWindow.postMessage({type:"theme", theme: effTheme()}, "*"); if (q) fr.contentWindow.postMessage({type:"resumo-busca", q, id: sec||""}, "*"); } catch(_){}
+      try { fr.contentDocument.addEventListener("click", e=>{
+        const a = e.target.closest && e.target.closest("a[href*='.html']"); if (!a) return;
+        e.preventDefault(); const [p, h] = a.getAttribute("href").split("#");
+        openFull(p.replace(/^.*\//,"").replace(/\.html$/,""), h||"");
+      }); } catch(_){}
+    });
+    fr.src = url + (sec ? "#" + sec : "");
+  }).catch(()=>{ o.innerHTML = `<div class="loading" style="padding:24px">Não foi possível abrir o resumo. <button class="btn" onclick="this.closest('.full').remove();document.body.classList.remove('noscroll')">Fechar</button></div>`; });
+}
+function openRzRep(f, sec, title){
+  document.querySelectorAll(".rzrep").forEach(x=>x.remove());
+  const o = document.createElement("div"); o.className = "rzrep"; o.setAttribute("role","dialog"); o.setAttribute("aria-label","Reportar erro no resumo");
+  const where = (RESUMOS[f]||f) + (title ? " › " + title : "");
+  o.innerHTML = `<form class="rep-form"><div class="rep-t">Reportar erro no resumo</div><div class="rep-where">${escH(where)}</div>
+    <select name="tipo" aria-label="Tipo de problema"><option>Conteúdo errado ou desatualizado</option><option>Falta conteúdo</option><option>Divergência entre fontes</option><option>Figura ou tabela</option><option>Índice ou link</option><option>Outro</option></select>
+    <textarea name="texto" required placeholder="O que está errado, faltando ou confuso neste trecho?"></textarea>
+    <div class="rep-act"><button class="btn primary rep-send" type="submit">Enviar reporte</button><button class="btn ghost rep-cancel" type="button">Cancelar</button><span class="hint rep-msg"></span></div></form>`;
+  const fm = o.querySelector("form"), msg = o.querySelector(".rep-msg"), close = ()=>o.remove();
+  o.addEventListener("click", e=>{ if (e.target===o || e.target.closest(".rep-cancel")) close(); });
+  fm.addEventListener("submit", async e=>{
+    e.preventDefault(); const txt = fm.texto.value.trim(); if (!txt) { msg.textContent = "Descreva o problema."; return; }
+    const btn = fm.querySelector(".rep-send"); btn.disabled = true; msg.textContent = "Enviando…";
+    let r; try { r = await REP.add({qid: "rz", num: null, tipo: fm.tipo.value, texto: txt, trecho: (where + " [" + f + (sec ? "#" + sec : "") + "]").slice(0,400)}); } catch(err) { r = {ok:false}; }
+    btn.disabled = false;
+    if (r && (r.ok || r.pend)) { msg.textContent = r.ok ? "Reporte enviado. Obrigado!" : "Salvo neste aparelho; será enviado assim que possível."; fm.texto.value = ""; setTimeout(close, 1500); loadReps(); }
+    else msg.textContent = "Não foi possível enviar agora. Tente de novo.";
+  });
+  document.body.appendChild(o); fm.texto.focus();
+}
+window.addEventListener("message", e=>{ const m = e.data||{}; if (m.type==="resumo-close") closeFull(); if (m.type==="resumo-report" && FULLF) openRzRep(FULLF, m.sec||"", m.title||""); if (m.type==="theme-set" && m.theme) setTheme(m.theme, false); });
+(function(){
+  const box = document.getElementById("rz-links"); box.innerHTML = "";
+  document.getElementById("rz-n").textContent = "· " + RZLIST.length;
+  const meOf = n => n <= 19 ? "ME1" : n <= 36 ? "ME2" : "ME3";
+  /* uma linha por ponto do programa; ponto com vários subresumos abre a lista deles (na ordem do RZLIST) */
+  const PT = {}; Q.forEach(q=>(q.g||[]).forEach(t=>{ const m = /Ponto (\d+) · (.+)$/.exec(t); if (m) PT[+m[1]] = m[2]; }));
+  const byP = {}, also = {};
+  RZLIST.forEach(r=>{ (byP[r[1][0]] = byP[r[1][0]] || []).push(r); r[1].slice(1).forEach(p=>{ (also[p] = also[p] || []).push(r); }); });
+  const item = (cap, txt, fn)=>{ const b = document.createElement("button"); b.className = "rz-item"; b.type = "button"; b.innerHTML = `<span class="cap">${cap}</span><span>${txt}</span>`; b.onclick = fn; return b; };
+  let cur = "";
+  Object.keys(byP).map(Number).sort((a,b)=>a-b).forEach(n=>{
+    const me = meOf(n), L = byP[n];
+    if (me !== cur) { cur = me; box.appendChild(Object.assign(document.createElement("div"),{className:"rz-src",textContent:me})); }
+    if (L.length === 1) { const r = L[0]; box.appendChild(item(r[1].length>1?"Pontos "+r[1].join(" e "):"Ponto "+n, r[2], ()=>openFull(r[0],""))); return; }
+    const sub = document.createElement("div"); sub.className = "rz-sub"; sub.hidden = true; sub.id = "rz-sub-"+n;
+    const head = item("Ponto "+n, `${escH(PT[n]||L[0][2])}<span class="nsub">· ${L.length} subresumos</span><span class="chev" aria-hidden="true">›</span>`, ()=>{ sub.hidden = !sub.hidden; head.setAttribute("aria-expanded", String(!sub.hidden)); });
+    head.setAttribute("aria-expanded","false"); head.setAttribute("aria-controls", sub.id);
+    L.forEach((r,i)=>sub.appendChild(item(String(i+1), r[2], ()=>openFull(r[0],""))));
+    if (also[n]) { sub.appendChild(Object.assign(document.createElement("div"),{className:"rz-also",textContent:"Também neste ponto"})); also[n].forEach(r=>sub.appendChild(item("P"+r[1][0], r[2], ()=>openFull(r[0],"")))); }
+    box.append(head, sub);
+  });
+  const fontes = [...new Set(Q.map(q=>q.rb||"Miller's Anesthesia, 10ª ed."))];
+  document.getElementById("foot").innerHTML = `<p><b>Fontes:</b> ${fontes.join(" · ")}.</p>`;
+})();
+
+/* ---------- busca em todos os resumos ---------- */
+(function(){
+  const inp = document.getElementById("rzq"), out = document.getElementById("rzs-res"), nfo = document.getElementById("rzs-n");
+  const SUB = {"₀":"0","₁":"1","₂":"2","₃":"3","₄":"4","₅":"5","₆":"6","₇":"7","₈":"8","₉":"9","-":" ","–":" ","—":" ","−":" ","‑":" ","µ":"u","μ":"u","’":"'"};
+  const fc = c => { if (SUB[c]) return SUB[c]; const f = c.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase(); return f.length===1 ? f : (c.toLowerCase()[0]||c); };
+  const fold = t => { let o = ""; for (const c of t) o += fc(c); return o; };   /* 1 caractere → 1 caractere: as posições batem com o texto original */
+  let IDXP = null, tmr = null, seq = 0;
+  function index(){
+    if (!IDXP) IDXP = Promise.all(RZLIST.map(r=>loadRZ(r[0]).then(doc=>{
+      const L = [];
+      doc.querySelectorAll("section[id]").forEach(sc=>{
+        const txt = Array.from(sc.textContent).join("").replace(/\s+/g," ").trim();   /* Array.from: conta pares substitutos como 1 */
+        L.push({f: r[0], id: sc.id, t: sc.getAttribute("data-t") || sc.id, txt: Array.from(txt), ft: fold(txt), ftt: fold(sc.getAttribute("data-t")||"")});
+      });
+      return L;
+    }).catch(()=>[]))).then(a=>a.flat()).catch(e=>{ IDXP = null; throw e; });
+    return IDXP;
+  }
+  const cnt = (h, w) => { let n = 0, k = h.indexOf(w); while (k >= 0) { n++; k = h.indexOf(w, k + w.length); } return n; };
+  function snippet(s, words, phrase){
+    const ft = Array.from(s.ft);
+    const hay = s.ft; let at = hay.indexOf(phrase); if (at < 0) at = Math.min(...words.map(w=>{ const k = hay.indexOf(w); return k < 0 ? 1e9 : k; }));
+    const a = Math.max(0, at - 70), b = Math.min(s.txt.length, at + 150);
+    const sub = s.txt.slice(a, b), fsub = ft.slice(a, b).join("");
+    const mk = new Array(sub.length).fill(false);
+    words.forEach(w=>{ let k = fsub.indexOf(w); while (k >= 0) { for (let j = k; j < k + w.length; j++) mk[j] = true; k = fsub.indexOf(w, k + w.length); } });
+    let h = a > 0 ? "… " : "", on = false;
+    sub.forEach((c,j)=>{ if (mk[j] && !on) { h += "<mark>"; on = true; } if (!mk[j] && on) { h += "</mark>"; on = false; } h += escH(c); });
+    if (on) h += "</mark>"; if (b < s.txt.length) h += " …";
+    return h;
+  }
+  async function run(){
+    const q = inp.value.trim(), my = ++seq;
+    const fq = fold(q), words = fq.split(/\s+/).filter(w=>w.length >= 2);
+    if (fq.length < 3 || !words.length) { out.innerHTML = ""; nfo.hidden = true; return; }
+    nfo.hidden = false; if (!IDXP) nfo.textContent = "Carregando os resumos…";
+    let all; try { all = await index(); } catch(e) { if (my===seq) nfo.textContent = "Não foi possível carregar os resumos agora."; return; }
+    if (my !== seq) return;
+    const res = [];
+    all.forEach(s=>{
+      if (!words.every(w=>s.ft.includes(w) || s.ftt.includes(w))) return;
+      const ph = cnt(s.ft, fq), sc = ph*5 + words.reduce((n,w)=>n + Math.min(cnt(s.ft, w), 8), 0) + (words.every(w=>s.ftt.includes(w)) ? 12 : 0);
+      res.push({s, sc, ph});
+    });
+    res.sort((a,b)=>b.sc - a.sc);
+    const occ = res.reduce((n,r)=>n + Math.max(r.ph, 1), 0), nr = new Set(res.map(r=>r.s.f)).size;
+    nfo.textContent = res.length ? `${res.length} ${res.length>1?"seções":"seção"} em ${nr} ${nr>1?"resumos":"resumo"}` + (res.length > 40 ? " · mostrando as 40 mais relevantes" : "") : "Nada encontrado. Tente outra grafia ou menos palavras.";
+    out.innerHTML = res.slice(0, 40).map((r,i)=>`<button class="rzs-hit" type="button" data-i="${i}"><div class="w"><b>${escH(RESUMOS[r.s.f]||r.s.f)}</b> › ${escH(r.s.t)}</div><div class="sn">${snippet(r.s, words, fq)}</div></button>`).join("");
+    out.onclick = e=>{ const b = e.target.closest(".rzs-hit"); if (!b) return; const r = res[+b.dataset.i]; RZQ = res[+b.dataset.i].ph ? q : words.sort((x,y)=>y.length-x.length)[0]; openFull(r.s.f, r.s.id); };
+  }
+  inp.addEventListener("input", ()=>{ clearTimeout(tmr); tmr = setTimeout(run, 250); });
+  inp.addEventListener("keydown", e=>{ if (e.key==="Enter") { e.preventDefault(); clearTimeout(tmr); run(); } });
+  inp.addEventListener("focus", ()=>{ index().catch(()=>{}); }, {once:true});   /* começa a carregar ao tocar na caixa */
+})();
+
+(function start(){
+  const any = Q.some((q,i)=>done(i));
+  try { history.scrollRestoration = "manual"; } catch(e) {}
+  if (any) { const last = S._last != null && IDX[S._last] != null ? IDX[S._last] : -1; const n = nextOpen(last);
+    if (n != null) { goTo(n); const again = ()=>{ const el = document.getElementById("q"+n); if (el && Math.abs(el.getBoundingClientRect().top) > 40) el.scrollIntoView({block:"start"}); };
+      requestAnimationFrame(again); setTimeout(again, 350); window.addEventListener("load", ()=>setTimeout(again, 50), {once:true}); return; } }
+  renderList(false);
+})();
+
+SYNC.apply = s => { S = s && typeof s === "object" ? s : {}; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} const y = scrollY; renderList(false); scrollTo(0, y); };
+window.goTo = goTo; window.closeFull = closeFull; window.Qn = () => Q.length;
+}
+</script>
+
+<div class="gate" id="gate">
+  <form class="lcard" id="lform" hidden>
+    <div class="eyebrow">Estudo para TEA/TSA</div>
+    <h1>Banco de Questões em Anestesiologia</h1>
+    <label>Usuário<input id="lu" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></label>
+    <label>Senha<input id="lp" name="password" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary" type="submit" id="lbtn">Entrar</button>
+    <p class="lerr" id="lerr" role="alert"></p>
+  </form>
+  <div class="splash" id="splash">Carregando…</div>
+</div>
+<script>
+(function(){
+"use strict";
+const CFG = window.BANCO_CONFIG || {};
+const DOMINIO = CFG.dominio || "bancotea.app";   // usuário "getulio" vira getulio@bancotea.app
+const SUFIXO = CFG.sufixoSenha || "#tea";        // o Supabase exige ≥ 6 caracteres; o app acrescenta este sufixo
+const $ = s => document.querySelector(s);
+const toEmail = u => u.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "") + "@" + DOMINIO;
+const nice = e => { const n = (e || "").split("@")[0]; return n ? n.charAt(0).toUpperCase() + n.slice(1) : ""; };
+const NOMES = Object.assign({getulio: "Getúlio", bruno: "Bruno", guilherme: "Guilherme"}, CFG.nomes || {});
+
+function loadScript(src, integrity){
+  return new Promise((ok, err) => { const s = document.createElement("script"); s.src = src; if (integrity) { s.integrity = integrity; s.crossOrigin = "anonymous"; } s.onload = ok; s.onerror = () => err(new Error("Não carregou " + src)); document.head.appendChild(s); });
+}
+
+/* ---------- Supabase ---------- */
+async function supabaseAPI(){
+  if (!CFG.supabaseUrl || !CFG.supabaseAnonKey) throw new Error("config");
+  // supabase-js 2.45.4 servido pelo próprio site (pasta vendor/): sem depender de CDN de terceiros
+  await loadScript("vendor/supabase.js");
+  const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {auth: {persistSession: true, autoRefreshToken: true}});
+  const B = sb.storage.from("conteudo");
+  return {
+    async session(){
+      const {data} = await sb.auth.getSession(); const u = data.session && data.session.user; if (!u) return null;
+      // confere no servidor: sessão encerrada (troca de senha, "desconectar todos") não pode continuar valendo neste aparelho
+      try { const {error} = await sb.auth.getUser(); if (error && [401, 403, 404].includes(error.status)) { await this.signOut(); return null; } } catch(e) {}
+      return {id: u.id, email: u.email};
+    },
+    async signIn(user, pass){ const {data, error} = await sb.auth.signInWithPassword({email: toEmail(user), password: pass + SUFIXO}); if (error) throw error; return {id: data.user.id, email: data.user.email}; },
+    async signOut(){
+      // sai só deste aparelho; erro do servidor (sessão já encerrada → 403) não impede a saída local
+      try { await sb.auth.signOut({scope: "local"}); } catch(e) {}
+      for (const st of [localStorage, sessionStorage]) { try { Object.keys(st).filter(k => k.startsWith("sb-")).forEach(k => st.removeItem(k)); } catch(e) {} }
+    },
+    async changePass(user, atual, nova){
+      // confere a senha atual, troca e derruba as outras sessões (outros aparelhos ou quem tiver a senha antiga)
+      const {error: e1} = await sb.auth.signInWithPassword({email: toEmail(user), password: atual + SUFIXO}); if (e1) throw new Error("atual");
+      const {error: e2} = await sb.auth.updateUser({password: nova + SUFIXO}); if (e2) throw e2;
+      try { await sb.auth.signOut({scope: "others"}); } catch(e) {}
+    },
+    async text(path){
+      // via URL assinada + no-store: conteúdo atualizado aparece na hora, sem cache antigo
+      const {data, error} = await B.createSignedUrl(path, 120); if (error) throw error;
+      const r = await fetch(data.signedUrl + "&v=" + Date.now(), {cache: "no-store"}); if (!r.ok) throw new Error(r.status);
+      return await r.text();
+    },
+    async sign(paths){
+      const out = {};
+      for (let i = 0; i < paths.length; i += 100) {
+        const {data, error} = await B.createSignedUrls(paths.slice(i, i + 100), 60 * 60 * 24);
+        if (error) throw error;
+        data.forEach(d => { if (d.signedUrl) out[d.path] = d.signedUrl; });
+      }
+      return out;
+    },
+    async getProg(uid){ const {data, error} = await sb.from("progresso").select("estado,atualizado").eq("user_id", uid).maybeSingle(); if (error) throw error; return data; },
+    async setProg(uid, estado){ const {data, error} = await sb.from("progresso").upsert({user_id: uid, estado}).select("atualizado").single(); if (error) throw error; return data.atualizado; },
+    async repAdd(r){ const {error} = await sb.from("reportes").insert(r); if (error) throw error; },
+    async repList(){ const {data, error} = await sb.from("reportes").select("*").order("criado", {ascending: false}).limit(1000); if (error) throw error; return data || []; },
+    async repUpd(id, patch){ const {error} = await sb.from("reportes").update(patch).eq("id", id); if (error) throw error; }
+  };
+}
+
+/* ---------- modo simulado (teste local, sem servidor) ---------- */
+function mockAPI(){
+  const USERS = CFG.mockUsers || {};   // só no teste local: o config.js de teste define mockUsers
+  const ls = (k, v) => { if (v === undefined) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch(e) { return null; } } localStorage.setItem(k, JSON.stringify(v)); };
+  return {
+    async session(){ return ls("mock-sessao"); },
+    async signIn(user, pass){ const u = user.trim().toLowerCase(); if (USERS[u] !== pass) throw new Error("Invalid login credentials"); const s = {id: "mock-" + u, email: toEmail(u)}; ls("mock-sessao", s); return s; },
+    async signOut(){ localStorage.removeItem("mock-sessao"); },
+    async changePass(user, atual, nova){ const u = user.trim().toLowerCase(); if (USERS[u] !== atual) throw new Error("atual"); USERS[u] = nova; },
+    async text(path){ const r = await fetch("conteudo/" + path); if (!r.ok) throw new Error(r.status); return r.text(); },
+    async sign(paths){ const o = {}; paths.forEach(p => o[p] = new URL("conteudo/" + p, location.href).href); return o; },
+    async getProg(uid){ return ls("mock-db-" + uid); },
+    async setProg(uid, estado){ const at = new Date().toISOString() + Math.random().toString(36).slice(2, 6); ls("mock-db-" + uid, {estado, atualizado: at}); return at; },
+    async repAdd(r){ if (CFG.mockSemTabela) throw new Error("relation reportes does not exist"); const a = ls("mock-reportes") || []; a.push(Object.assign({id: a.length + 1, criado: new Date().toISOString(), status: "aberto"}, r)); ls("mock-reportes", a); },
+    async repList(){ if (CFG.mockSemTabela) throw new Error("relation reportes does not exist"); return (ls("mock-reportes") || []).slice().reverse(); },
+    async repUpd(id, patch){ ls("mock-reportes", (ls("mock-reportes") || []).map(r => r.id === id ? Object.assign(r, patch) : r)); }
+  };
+}
+
+/* ---------- conteúdo ---------- */
+let API, URLS = {};
+const RZT = {}, RZU = {};
+function resumo(f){
+  if (!RZT[f]) RZT[f] = API.text("resumos/" + f + ".html").then(t => t
+      .replace(/src="\.\.\/(img\/[^"]+)"/g, (m, p) => 'src="' + (URLS[p] || "") + '"')
+      .replace('href="resumo.css"', 'href="' + new URL("resumos/resumo.css", location.href).href + '"'))
+    .catch(e => { delete RZT[f]; throw e; });
+  return RZT[f];
+}
+function resumoURL(f){
+  if (!RZU[f]) RZU[f] = resumo(f).then(t => URL.createObjectURL(new Blob([t], {type: "text/html;charset=utf-8"}))).catch(e => { delete RZU[f]; throw e; });
+  return RZU[f];
+}
+window.APP = {resumo, resumoURL};
+
+/* ---------- sincronização ---------- */
+function setStatus(kind){
+  const el = $("#acct .sync"); if (!el) return;
+  el.className = "sync" + (kind === "err" ? " err" : "");
+  el.textContent = kind === "saving" ? "salvando…" : kind === "err" ? "sem conexão: salvo neste aparelho, sincroniza depois" : "✓ salvo na conta";
+}
+function merge(local, remote){
+  const out = Object.assign({}, remote || {});
+  Object.keys(local || {}).forEach(k => {
+    if (k === "_last") return;
+    const L = local[k], R = out[k];
+    if (!R) out[k] = L;
+    else if (R.pick == null && L && L.pick != null) out[k] = L;
+  });
+  if (!out._last && local && local._last) out._last = local._last;
+  return out;
+}
+function makeSync(uid){
+  const MK = "banco-sync-" + uid;
+  const meta = (() => { try { return JSON.parse(localStorage.getItem(MK) || "null") || {}; } catch(e) { return {}; } })();
+  const putMeta = () => { try { localStorage.setItem(MK, JSON.stringify(meta)); } catch(e) {} };
+  const S = {known: null, dirty: false, busy: false, timer: null, last: null, apply: null};
+  S.push = st => { S.last = st; S.dirty = true; meta.dirty = true; putMeta(); clearTimeout(S.timer); S.timer = setTimeout(S.flush, 1200); setStatus("saving"); };
+  S.flush = async () => {
+    clearTimeout(S.timer); S.timer = null;
+    if (!S.dirty) return;
+    if (S.busy) { S.timer = setTimeout(S.flush, 700); return; }
+    S.busy = true; S.dirty = false;
+    try {
+      S.known = await API.setProg(uid, JSON.parse(JSON.stringify(S.last || {})));
+      if (!S.dirty) { meta.dirty = false; meta.base = S.known; putMeta(); setStatus("ok"); }
+    } catch(e) { S.dirty = true; setStatus("err"); S.timer = setTimeout(S.flush, 20000); }
+    finally { S.busy = false; }
+  };
+  S.pull = async () => {
+    if (S.dirty || S.busy) return;
+    try {
+      const r = await API.getProg(uid);
+      if (r && r.atualizado !== S.known && !S.dirty) { S.known = r.atualizado; meta.base = r.atualizado; meta.dirty = false; putMeta(); if (S.apply) S.apply(r.estado || {}); }
+      setStatus("ok");
+    } catch(e) {}
+  };
+  S.init = async key => {
+    let local = null; try { local = JSON.parse(localStorage.getItem(key) || "null"); } catch(e) {}
+    let r = null, offline = false;
+    try { r = await API.getProg(uid); } catch(e) { offline = true; }
+    let st;
+    if (offline) st = local || {};
+    else if (!r) st = local || {};
+    else if (local && meta.dirty && meta.base === r.atualizado) st = local;          // mudanças deste aparelho ainda não enviadas
+    else if (local && meta.dirty) st = merge(local, r.estado);                        // os dois lados mudaram
+    else st = r.estado || {};                                                         // a conta manda
+    S.known = r ? r.atualizado : null;
+    try { localStorage.setItem(key, JSON.stringify(st)); } catch(e) {}
+    if (!offline && (!r ? Object.keys(st).length : JSON.stringify(st) !== JSON.stringify(r.estado))) S.push(st);
+    else if (offline) setStatus("err"); else { meta.base = S.known; meta.dirty = false; putMeta(); }
+  };
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") S.pull(); else S.flush(); });
+  window.addEventListener("pagehide", () => S.flush());
+  window.addEventListener("online", () => S.flush());
+  setInterval(() => { if (document.visibilityState === "visible") S.pull(); }, 60000);
+  return S;
+}
+
+/* ---------- reportes de erro (tabela "reportes"; se falhar, guarda neste aparelho e reenvia depois) ---------- */
+function makeReportes(u, autor){
+  const FK = "banco-rep-fila-" + u.id;
+  const fila = () => { try { return JSON.parse(localStorage.getItem(FK) || "[]"); } catch(e) { return []; } };
+  const putF = a => { try { localStorage.setItem(FK, JSON.stringify(a)); } catch(e) {} };
+  async function flush(){ const f = fila(); if (!f.length) return; const rest = []; for (const r of f) { try { const x = Object.assign({}, r); delete x.criado_local; await API.repAdd(x); } catch(e) { rest.push(r); } } putF(rest); }
+  return {
+    async add(r){
+      const row = {qid: r.qid, num: r.num, tipo: r.tipo, texto: r.texto, trecho: r.trecho, autor};
+      try { await API.repAdd(row); flush().catch(() => {}); return {ok: true}; }
+      catch(e) { putF(fila().concat([Object.assign({criado_local: new Date().toISOString()}, row)])); return {ok: false, pend: true}; }
+    },
+    async list(){
+      try { await flush(); } catch(e) {}
+      let rows = []; try { rows = await API.repList(); } catch(e) {}
+      return rows.concat(fila().map((r, k) => Object.assign({id: "fila-" + k, status: "aberto", pend: true, criado: r.criado_local}, r)));
+    },
+    async update(id, patch){ if (String(id).startsWith("fila-")) return; await API.repUpd(id, patch); }
+  };
+}
+
+/* ---------- entrada ---------- */
+function showLogin(msg){
+  $("#splash").hidden = true; $("#lform").hidden = false; $("#lerr").textContent = msg || "";
+  setTimeout(() => $("#lu").focus(), 50);
+}
+async function enter(u){
+  if (window.__BANCO_ENTROU) return; window.__BANCO_ENTROU = true;  /* evita carregar o banco duas vezes */
+  $("#lform").hidden = true; $("#splash").hidden = false; $("#splash").textContent = "Carregando questões…";
+  let Q;
+  try {
+    const [qt, it] = await Promise.all([API.text("questoes.json"), API.text("imagens.json")]);
+    Q = JSON.parse(qt);
+    URLS = await API.sign(JSON.parse(it));
+    Q.forEach(q => { if (q.img && URLS[q.img]) q.img = URLS[q.img]; });
+  } catch(e) {
+    console.error(e);
+    $("#splash").textContent = "Não foi possível carregar as questões. Verifique a conexão e recarregue a página.";
+    return;
+  }
+  const key = "banco-tea-v3-" + u.id;
+  const sync = makeSync(u.id);
+  await sync.init(key);
+  $("#gate").hidden = true; document.body.classList.remove("locked");
+  const user = (u.email || "").split("@")[0];
+  const acct = $("#acct");
+  acct.innerHTML = `<span class="who"></span><span class="sync"></span><button class="lnk" type="button" id="senha">Trocar senha</button><button class="lnk" type="button" id="sair">Sair</button>`;
+  acct.querySelector(".who").textContent = NOMES[user] || nice(u.email);
+  setStatus(sync.dirty ? "saving" : "ok");
+  $("#senha").onclick = () => trocarSenha(user);
+  $("#sair").onclick = async () => { try { await Promise.race([sync.flush(), new Promise(r => setTimeout(r, 4000))]); } catch(e) {} await API.signOut(); location.replace(location.pathname); };
+  window.REPORTES = makeReportes(u, NOMES[user] || nice(u.email));
+  BOOT(Q, u.id, sync);
+}
+
+/* ---------- trocar senha ---------- */
+function trocarSenha(user){
+  if (document.querySelector(".pw-ov")) return;
+  const ov = document.createElement("div"); ov.className = "pw-ov"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-label", "Trocar senha");
+  ov.innerHTML = `<form class="lcard" autocomplete="on">
+    <h2 style="margin:0">Trocar senha</h2>
+    <input type="text" name="username" autocomplete="username" hidden>
+    <label>Senha atual<input name="atual" type="password" autocomplete="current-password" required></label>
+    <label>Nova senha<input name="nova" type="password" autocomplete="new-password" minlength="10" required></label>
+    <label>Repita a nova senha<input name="nova2" type="password" autocomplete="new-password" minlength="10" required></label>
+    <p class="lnote">Pelo menos 10 caracteres. Uma frase longa é mais segura e fácil de lembrar. Os outros aparelhos serão desconectados.</p>
+    <p class="lerr" role="alert"></p>
+    <div class="row"><button class="btn" type="button" data-x>Cancelar</button><button class="btn primary" type="submit">Trocar</button></div>
+  </form>`;
+  const f = ov.querySelector("form"), msg = ov.querySelector(".lerr");
+  f.username.value = user;
+  const close = () => ov.remove();
+  ov.querySelector("[data-x]").onclick = close;
+  ov.addEventListener("click", e => { if (e.target === ov) close(); });
+  f.addEventListener("submit", async e => {
+    e.preventDefault(); msg.textContent = "";
+    const atual = f.atual.value, nova = f.nova.value;
+    if (nova.length < 10) { msg.textContent = "A nova senha precisa ter pelo menos 10 caracteres."; return; }
+    if (nova !== f.nova2.value) { msg.textContent = "As duas senhas novas não são iguais."; return; }
+    if (nova === atual || nova.toLowerCase().includes(user)) { msg.textContent = "Escolha uma senha diferente da atual e que não contenha o usuário."; return; }
+    const b = f.querySelector("[type=submit]"); b.disabled = true;
+    try { await API.changePass(user, atual, nova); f.innerHTML = `<h2 style="margin:0">Senha trocada</h2><p class="lok">Pronto. Use a nova senha nos outros aparelhos.</p><div class="row"><button class="btn primary" type="button">Fechar</button></div>`; f.querySelector("button").onclick = close; }
+    catch(err) { msg.textContent = err.message === "atual" ? "Senha atual incorreta." : "Não foi possível trocar agora (" + (err.message || "erro") + ")."; b.disabled = false; }
+  });
+  document.body.appendChild(ov); f.atual.focus();
+}
+
+$("#lform").addEventListener("submit", async e => {
+  e.preventDefault();
+  const b = $("#lbtn"); b.disabled = true; $("#lerr").textContent = "";
+  try { const u = await API.signIn($("#lu").value, $("#lp").value); await enter(u); }
+  catch(err) { showLogin(/invalid|credentials/i.test(err.message || "") ? "Usuário ou senha incorretos." : "Não foi possível entrar agora. Verifique a conexão."); }
+  finally { b.disabled = false; }
+});
+
+(async function main(){
+  try { API = CFG.mock ? mockAPI() : await supabaseAPI(); }
+  catch(e) { $("#splash").textContent = e.message === "config" ? "Falta configurar o arquivo config.js (endereço e chave do Supabase)." : "Não foi possível carregar o sistema de login. Verifique a conexão."; return; }
+  let u = null; try { u = await API.session(); } catch(e) {}
+  if (u) enter(u); else showLogin();
+})();
+})();
+</script>
+
+</body>
+</html>
