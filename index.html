@@ -325,6 +325,8 @@ body.noscroll{overflow:hidden}
   <div class="qactions">
     <button class="btn" id="btn-reset">Apagar respostas e recomeçar</button>
     <span id="reset-confirm" class="hint" hidden>Toque de novo para confirmar.</span>
+    <button class="btn" id="btn-reset-f" hidden>Apagar respostas deste filtro</button>
+    <span id="reset-f-confirm" class="hint" hidden></span>
   </div>
 
   <footer class="foot" id="foot"></footer>
@@ -532,7 +534,17 @@ function updateStats(){
   document.getElementById("s-ok").textContent = ok;
   document.getElementById("s-pct").textContent = n ? Math.round(100*ok/n)+"%" : "—";
   document.getElementById("s-lvl").textContent = [1,2,3].filter(d=>by[d][0]).map(d=>`${LV[d]} ${by[d][1]}/${by[d][0]}`).join(" · ");
-  renderCont();
+  renderCont(); paintResetF();
+}
+
+/* Botão "Apagar respostas deste filtro": só aparece com algum filtro ativo e mostra quantas questões da lista atual já foram feitas. */
+const filterOn = () => F.area!=="all" || F.sub!=="all" || F.lvl!=="all" || F.st!=="all";
+const doneInFilter = () => filtered().filter(done);
+function paintResetF(){
+  const b = document.getElementById("btn-reset-f"); if (!b) return;
+  const n = filterOn() ? doneInFilter().length : 0;
+  b.hidden = !n; if (n) b.textContent = `Apagar respostas deste filtro (${n})`;
+  if (!n) { const m = document.getElementById("reset-f-confirm"); if (m) m.hidden = true; }
 }
 
 function refreshCell(i){
@@ -694,6 +706,16 @@ document.getElementById("btn-reset").addEventListener("click", ()=>{
   const m = document.getElementById("reset-confirm");
   if (!armed) { armed = true; m.hidden = false; setTimeout(()=>{ armed=false; m.hidden=true; }, 4000); return; }
   armed = false; m.hidden = true; S = {}; save(); page = 0; renderList(true);
+});
+
+let armedF = false;
+document.getElementById("btn-reset-f").addEventListener("click", ()=>{
+  const m = document.getElementById("reset-f-confirm");
+  const ids = doneInFilter(); if (!ids.length) return;
+  if (!armedF) { armedF = true; m.textContent = ids.length===1 ? "Toque de novo para apagar só esta (as outras ficam)." : `Toque de novo para apagar só estas ${ids.length} (as outras ficam).`; m.hidden = false; setTimeout(()=>{ armedF=false; m.hidden=true; }, 4000); return; }
+  armedF = false; m.hidden = true;
+  ids.forEach(i=>{ if (S._last === id(i)) delete S._last; delete S[id(i)]; });
+  save(); page = 0; renderList(true);
 });
 
 /* ---------- Tema claro/escuro ---------- */
