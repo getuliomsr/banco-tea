@@ -96,6 +96,14 @@ details.sheet summary{cursor:pointer;font-size:13px;color:var(--accent);font-wei
 .cell.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
 .cell.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
 .cell.seen{border-style:dashed;color:var(--accent)}
+.cell{position:relative}
+.cell.mk::after{content:"★";position:absolute;top:-6px;right:-4px;font-size:11px;line-height:1;color:var(--mid)}
+.star{font:inherit;font-family:var(--f-ui);font-size:12.5px;background:none;border:1px solid var(--line);border-radius:999px;padding:3px 9px 3px 7px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:4px;line-height:1.2}
+.star:hover{border-color:var(--mid);color:var(--mid)}
+.star .si{font-size:14px;line-height:1}
+.star[aria-pressed="true"]{color:var(--mid);border-color:var(--mid);background:var(--mark)}
+.star:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.reshuf{font:500 12.5px/1 var(--f-ui);background:none;border:0;color:var(--accent);text-decoration:underline;text-underline-offset:2px;cursor:pointer;padding:4px}
 .legend{font-size:12px;color:var(--muted);margin-top:8px}
 
 .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -285,6 +293,7 @@ body.noscroll{overflow:hidden}
       <span>Acertos <b id="s-ok">0</b></span>
       <span>Aproveitamento <b id="s-pct">—</b></span>
       <span id="s-lvl"></span>
+      <span id="s-mk"></span>
       <button class="btn perf-btn" id="perf-btn" type="button">Desempenho por área</button>
       <button class="btn" id="rep-btn" type="button" style="font-family:var(--f-ui);padding:6px 10px">Reportes</button>
     </div>
@@ -304,6 +313,13 @@ body.noscroll{overflow:hidden}
       <button class="chip" data-g="st" data-v="bad" id="fs-bad">Erradas</button>
       <button class="chip" data-g="st" data-v="ok" id="fs-ok">Certas</button>
       <button class="chip" data-g="st" data-v="img" id="fs-img">Com imagem</button>
+      <button class="chip" data-g="st" data-v="mk" id="fs-mk">★ Só marcadas</button>
+    </div>
+    <div class="frow" role="group" aria-label="Origem" id="f-og"><span class="flabel">Origem</span></div>
+    <div class="frow" role="group" aria-label="Ordem"><span class="flabel">Ordem</span>
+      <button class="chip" data-g="ord" data-v="prog" id="fo-prog">Do programa</button>
+      <button class="chip" data-g="ord" data-v="rand" id="fo-rand">Aleatória</button>
+      <button class="reshuf" type="button" id="reshuf" hidden>Sortear de novo</button>
     </div>
     <div class="frow pp" role="group" aria-label="Questões por página"><span class="flabel">Por página</span>
       <button class="chip" data-g="pp" data-v="10">10</button>
@@ -314,7 +330,7 @@ body.noscroll{overflow:hidden}
     </div></details>
     <details class="sheet" id="sheet"><summary>Cartão-resposta</summary>
       <div class="grid" id="grid"></div>
-      <div class="legend">Verde: acerto · vermelho: erro · tracejado: gabarito visto sem responder. Toque num número para ir à questão.</div>
+      <div class="legend">Verde: acerto · vermelho: erro · tracejado: gabarito visto sem responder · ★: marcada para revisar. Toque num número para ir à questão.</div>
     </details>
   </section>
 
@@ -344,7 +360,8 @@ const IDX = {}; Q.forEach((q,i)=>IDX[q.id]=i);
 const PT = q => { if (q.pp) return q.pp; const t = (q.g||[]).find(x=>/^ME\d › Ponto \d+/.test(x)); return t ? +t.match(/Ponto (\d+)/)[1] : 999; };
 const ORDER = Q.map((q,i)=>i).sort((a,b)=>PT(Q[a])-PT(Q[b]) || a-b);
 let POS = {};
-let S = {}, F = {area:"all", sub:"all", lvl:"all", st:"all"}, page = 0;
+const F0 = () => ({area:"all", sub:"all", lvl:"all", st:"all", og:"all"});
+let S = {}, F = Object.assign(F0(), {ord:"prog", seed:1}), page = 0;
 try { S = JSON.parse(localStorage.getItem(KEY) || "null") || null; } catch(e) { S = null; }
 if (!S) { S = {}; try { const o = JSON.parse(localStorage.getItem(OLD) || "null"); if (o) { Object.keys(o).forEach(k=>{ if (/^\d+$/.test(k)) S["p"+String(+k+1).padStart(3,"0")] = o[k]; }); } } catch(e) {} }
 try { const f = JSON.parse(localStorage.getItem(KEY + "-f") || "null"); if (f) F = Object.assign(F, f); } catch(e) {}
@@ -356,12 +373,25 @@ const st = i => S[id(i)] || (S[id(i)] = {});
 const rec = i => S[id(i)] || {};
 const answered = i => rec(i).pick != null;
 const done = i => answered(i) || !!rec(i).seen;
+const marked = i => !!rec(i).m;
 const status = i => answered(i) ? (rec(i).pick === Q[i].a ? "ok" : "bad") : (rec(i).seen ? "seen" : "open");
 const areaOf = t => t.split(" › ")[0], subOf = t => t.split(" › ")[1];
 const esc = t => t.replace(/"/g,"&quot;");
 
 const STRIKE_SVG = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 10h12"/><path d="M6.5 6.2C7 4.9 8.3 4 10 4c2 0 3.4 1.1 3.4 2.6"/><path d="M13.6 13.2c-.3 1.6-1.7 2.8-3.7 2.8-2 0-3.5-1-3.8-2.6"/></svg>';
 
+/* Origem: q.og = {p:["TEA","TSA"], s:["2/14", …]} (qb/origem.json). Questões novas = sem prova e sem simulado. */
+const ogP = q => (q.og && q.og.p) || [], ogS = q => ((q.og && q.og.s) || []).map(x=>x.split("/")[0]);
+function ogMatch(q){
+  if (F.og === "all") return true;
+  if (F.og === "TEA" || F.og === "TSA") return ogP(q).includes(F.og);
+  if (F.og === "nova") return !ogP(q).length && !ogS(q).length;
+  if (F.og.startsWith("s")) return ogS(q).includes(F.og.slice(1));
+  return true;
+}
+const OGL = v => v === "nova" ? "questões novas" : v.startsWith("s") ? "simulado " + v.slice(1) : v;
+/* Ordem aleatória: estável (mesma semente → mesma ordem); a semente muda quando o filtro muda ou em "Sortear de novo". */
+function hash(s){ let h = 2166136261; for (let k = 0; k < s.length; k++) { h ^= s.charCodeAt(k); h = Math.imul(h, 16777619); } h ^= h >>> 15; h = Math.imul(h, 2246822507); h ^= h >>> 13; return h >>> 0; }
 function filtered(){
   const L0 = ORDER.filter(i=>{
     const q = Q[i];
@@ -371,10 +401,13 @@ function filtered(){
       if (F.sub !== "all" && !tags.some(t=>subOf(t)===F.sub)) return false;
     }
     if (F.lvl !== "all" && String(q.d) !== F.lvl) return false;
+    if (!ogMatch(q)) return false;
     if (F.st === "img") return !!q.img;
+    if (F.st === "mk") return marked(i);
     if (F.st !== "all") { const s = status(i); if (F.st === "open" ? (s === "ok" || s === "bad") : s !== F.st) return false; }
     return true;
   });
+  if (F.ord === "rand") { const r = {}; L0.forEach(i=>r[i]=hash(F.seed + ":" + Q[i].id)); return L0.slice().sort((a,b)=>r[a]-r[b] || a-b); }
   if (F.area === "all") return L0;
   /* com uma área escolhida, ordena pelos pontos dessa área */
   const pa = i => { const t = Q[i].g.find(x=>areaOf(x)===F.area && /Ponto \d+/.test(x)); return t ? +t.match(/Ponto (\d+)/)[1] : 999; };
@@ -396,15 +429,24 @@ function renderFilters(){
     fs.innerHTML = `<span class="flabel">Subtema</span><button class="chip" data-g="sub" data-v="all">Todos</button>` + Object.keys(subs).sort((a,b)=>a.localeCompare(b,"pt",{numeric:true})).map(t=>`<button class="chip" data-g="sub" data-v="${esc(t)}">${t.replace(/^Ponto /,"")} <span class="src">${subs[t]}</span></button>`).join("");
     if (F.sub !== "all" && !subs[F.sub]) { F.sub = "all"; saveF(); }
   }
+  const fo = document.getElementById("f-og");
+  const oc = {TEA:0, TSA:0, nova:0}, sc = {};
+  Q.forEach(q=>{ ogP(q).forEach(p=>oc[p]=(oc[p]||0)+1); const ss = [...new Set(ogS(q))]; ss.forEach(x=>sc[x]=(sc[x]||0)+1); if (!ogP(q).length && !ss.length) oc.nova++; });
+  const sims = Object.keys(sc).sort((a,b)=>a-b);
+  if (F.og !== "all" && !(F.og in oc && oc[F.og]) && !(F.og.startsWith("s") && sc[F.og.slice(1)])) { F.og = "all"; saveF(); }
+  fo.innerHTML = `<span class="flabel">Origem</span><button class="chip" data-g="og" data-v="all">Todas</button>` + ["TEA","TSA"].filter(k=>oc[k]).map(k=>`<button class="chip" data-g="og" data-v="${k}" title="Caiu na prova ${k} (questões de ponto)">${k} <span class="src">${oc[k]}</span></button>`).join("")
+    + sims.map(x=>`<button class="chip" data-g="og" data-v="s${x}" title="Está no simulado TSA ${x}">Simulado ${x} <span class="src">${sc[x]}</span></button>`).join("")
+    + (oc.nova ? `<button class="chip" data-g="og" data-v="nova" title="Questões feitas para o banco (não vieram de prova nem de simulado)">Questões novas <span class="src">${oc.nova}</span></button>` : "");
+  document.getElementById("reshuf").hidden = F.ord !== "rand";
   document.querySelectorAll(".panel .chip").forEach(c=>c.setAttribute("aria-pressed", String(c.dataset.g==="pp" ? String(PAGE)===c.dataset.v : F[c.dataset.g]===c.dataset.v)));
-  const STL = {open:"não respondidas", bad:"erradas", ok:"certas", img:"com imagem"};
-  const act = [F.area!=="all" ? (F.sub!=="all" ? F.area + " › " + F.sub : F.area) : "", F.lvl!=="all" ? LV[F.lvl] : "", F.st!=="all" ? STL[F.st] : ""].filter(Boolean);
+  const STL = {open:"não respondidas", bad:"erradas", ok:"certas", img:"com imagem", mk:"só marcadas"};
+  const act = [F.area!=="all" ? (F.sub!=="all" ? F.area + " › " + F.sub : F.area) : "", F.lvl!=="all" ? LV[F.lvl] : "", F.st!=="all" ? STL[F.st] : "", F.og!=="all" ? OGL(F.og) : "", F.ord==="rand" ? "ordem aleatória" : ""].filter(Boolean);
   const fsum = document.getElementById("filt-sum"); if (fsum) fsum.textContent = "· " + (act.length ? act.join(" · ") : "todas as questões") + " · " + PAGE + " por página";
 }
 
 function qHTML(i){
   const q = Q[i], n = String(POS[i]!=null?POS[i]+1:i+1);
-  let h = `<div class="q-head"><span class="q-num" title="Código ${q.id}">Questão ${n}</span><span class="lvl d${q.d}" id="lv${i}" hidden>${LV[q.d]}</span><span class="src" id="sr${i}" hidden>${q.src}</span><button class="rep-q" id="rq${i}" data-q="${i}" type="button" title="Reportar um erro nesta questão">${repOpenFor(q.id)?'<span class="rep-dot" title="Há reporte aberto"></span>':""}Reportar erro</button></div>`;
+  let h = `<div class="q-head"><span class="q-num" title="Código ${q.id}">Questão ${n}</span><span class="lvl d${q.d}" id="lv${i}" hidden>${LV[q.d]}</span><span class="src" id="sr${i}" hidden>${q.src}</span><button class="star" id="mk${i}" data-q="${i}" type="button" aria-pressed="${marked(i)}" title="Marcar para revisar depois"><span class="si" aria-hidden="true">${marked(i)?"★":"☆"}</span><span class="sl">${marked(i)?"Marcada":"Revisar"}</span></button><button class="rep-q" id="rq${i}" data-q="${i}" type="button" title="Reportar um erro nesta questão">${repOpenFor(q.id)?'<span class="rep-dot" title="Há reporte aberto"></span>':""}Reportar erro</button></div>`;
   h += `<form class="rep-form" id="rf${i}" data-q="${i}" hidden><div class="rep-t">Reportar erro na questão ${n}</div>
     <select name="tipo" aria-label="Tipo de problema"><option>Enunciado ou alternativas</option><option>Gabarito</option><option>Comentário ou explicação</option><option>Resumo ou link do resumo</option><option>Imagem</option><option>Tags ou fonte</option><option>Outro</option></select>
     <textarea name="texto" required placeholder="O que está errado ou confuso? (ex.: o enunciado cita uma tabela do livro que não aparece aqui)"></textarea>
@@ -492,7 +534,7 @@ function renderList(scrollTop){
 
 function goTo(i){
   const ids = filtered(); let pos = ids.indexOf(i);
-  if (pos < 0) { F = {area:"all", sub:"all", lvl:"all", st:"all"}; saveF(); return goTo(i); }
+  if (pos < 0) { F = Object.assign(F, F0()); saveF(); return goTo(i); }
   page = Math.floor(pos/PAGE); renderList(false);
   const el = document.getElementById("q"+i); if (el) el.scrollIntoView({block:"start"});
 }
@@ -519,8 +561,8 @@ function renderGrid(ids){
   const g = document.getElementById("grid"); g.innerHTML = "";
   ids.forEach((i,k)=>{
     const c = document.createElement("button"); const s = status(i);
-    c.className = "cell" + (s==="ok"?" ok":s==="bad"?" bad":s==="seen"?" seen":"");
-    c.textContent = k+1; c.id = "c"+i; c.setAttribute("aria-label","Ir para a questão "+(k+1));
+    c.className = "cell" + (s==="ok"?" ok":s==="bad"?" bad":s==="seen"?" seen":"") + (marked(i)?" mk":"");
+    c.textContent = k+1; c.id = "c"+i; c.setAttribute("aria-label","Ir para a questão "+(k+1)+(marked(i)?" (marcada)":""));
     c.addEventListener("click",()=>goTo(i));
     g.appendChild(c);
   });
@@ -533,12 +575,13 @@ function updateStats(){
   document.getElementById("s-total").textContent = Q.length;
   document.getElementById("s-ok").textContent = ok;
   document.getElementById("s-pct").textContent = n ? Math.round(100*ok/n)+"%" : "—";
+  const nm = Q.filter((q,i)=>marked(i)).length; document.getElementById("s-mk").innerHTML = nm ? `★ Marcadas <b>${nm}</b>` : "";
   document.getElementById("s-lvl").textContent = [1,2,3].filter(d=>by[d][0]).map(d=>`${LV[d]} ${by[d][1]}/${by[d][0]}`).join(" · ");
   renderCont(); paintResetF();
 }
 
 /* Botão "Apagar respostas deste filtro": só aparece com algum filtro ativo e mostra quantas questões da lista atual já foram feitas. */
-const filterOn = () => F.area!=="all" || F.sub!=="all" || F.lvl!=="all" || F.st!=="all";
+const filterOn = () => F.area!=="all" || F.sub!=="all" || F.lvl!=="all" || F.st!=="all" || F.og!=="all";
 const doneInFilter = () => filtered().filter(done);
 function paintResetF(){
   const b = document.getElementById("btn-reset-f"); if (!b) return;
@@ -547,9 +590,13 @@ function paintResetF(){
   if (!n) { const m = document.getElementById("reset-f-confirm"); if (m) m.hidden = true; }
 }
 
+function paintStar(i){
+  const b = document.getElementById("mk"+i); if (!b) return; const m = marked(i);
+  b.setAttribute("aria-pressed", String(m)); b.querySelector(".si").textContent = m ? "★" : "☆"; b.querySelector(".sl").textContent = m ? "Marcada" : "Revisar";
+}
 function refreshCell(i){
   const c = document.getElementById("c"+i); if (!c) return; const s = status(i);
-  c.className = "cell" + (s==="ok"?" ok":s==="bad"?" bad":s==="seen"?" seen":"");
+  c.className = "cell" + (s==="ok"?" ok":s==="bad"?" bad":s==="seen"?" seen":"") + (marked(i)?" mk":"");
 }
 
 function openLB(src){
@@ -563,13 +610,15 @@ function openLB(src){
 document.getElementById("list").addEventListener("click", e=>{
   const rq = e.target.closest(".rep-q");
   if (rq) { const f = document.getElementById("rf"+rq.dataset.q); f.hidden = !f.hidden; if (!f.hidden) { f.querySelector(".rep-msg").textContent = ""; f.querySelector("textarea").focus(); } return; }
+  const sm = e.target.closest(".star");
+  if (sm) { const i = +sm.dataset.q, s = st(i); if (s.m) delete s.m; else s.m = 1; save(); paintStar(i); refreshCell(i); updateStats(); return; }
   const rf = e.target.closest(".rep-form");
   if (rf) { if (e.target.closest(".rep-cancel")) rf.hidden = true; return; }
   const o = e.target.closest(".opt"), x = e.target.closest(".strike"), go = e.target.closest(".btn.primary:not(.next-open)"), sk = e.target.closest(".btn.ghost"),
         nx = e.target.closest(".next-open"), tg = e.target.closest(".qtag"), zi = e.target.closest(".zoomimg");
   if (zi) { openLB(zi.dataset.src); return; }
   const ro = e.target.closest(".rs-open"); if (ro) { openRS(ro.dataset.f, ro.dataset.s); return; }
-  if (tg) { const t = tg.dataset.t; F.area = areaOf(t); F.sub = subOf(t); F.st = "all"; F.lvl = "all"; saveF(); page = 0; renderList(true); return; }
+  if (tg) { const t = tg.dataset.t; F.area = areaOf(t); F.sub = subOf(t); F.st = "all"; F.lvl = "all"; F.og = "all"; saveF(); page = 0; renderList(true); return; }
   if (nx) { const n = nextOpen(+nx.dataset.q); if (n != null) goTo(n); else nx.replaceWith(Object.assign(document.createElement("span"),{className:"hint",textContent:"Não há mais questões não respondidas neste filtro."})); return; }
   if (o && !o.disabled) {
     const i = +o.dataset.q, k = +o.dataset.k, s = st(i);
@@ -592,7 +641,8 @@ document.getElementById("list").addEventListener("click", e=>{
 document.querySelector(".panel").addEventListener("click", e=>{
   const c = e.target.closest(".chip");
   if (c && c.dataset.g === "pp") { const first = page*PAGE; PAGE = +c.dataset.v; try { localStorage.setItem(KEY + "-pp", String(PAGE)); } catch(e) {} page = Math.floor(first/PAGE); renderList(false); return; }
-  if (c) { F[c.dataset.g] = c.dataset.v; if (c.dataset.g === "area") F.sub = "all"; saveF(); page = 0; renderList(false); return; }
+  if (c) { F[c.dataset.g] = c.dataset.v; if (c.dataset.g === "area") F.sub = "all"; if (F.ord === "rand" && c.dataset.g !== "ord" || c.dataset.g === "ord" && c.dataset.v === "rand") F.seed = 1 + Math.floor(Math.random()*1e9); saveF(); page = 0; renderList(false); return; }
+  if (e.target.closest("#reshuf")) { F.seed = 1 + Math.floor(Math.random()*1e9); saveF(); page = 0; renderList(false); return; }
   if (e.target.closest("#btn-cont")) { const last = S._last != null && IDX[S._last] != null ? IDX[S._last] : -1; const n = nextOpen(last); if (n != null) goTo(n); }
 });
 ["pager-top","pager-bot"].forEach(id=>document.getElementById(id).addEventListener("click", e=>{
@@ -619,7 +669,7 @@ function openPerf(){
   const o = document.createElement("div"); o.className = "perf"; o.setAttribute("role","dialog"); o.setAttribute("aria-label","Desempenho por área"); o.innerHTML = h;
   o.addEventListener("click", e=>{ if (e.target.closest("#perf-x")) { o.remove(); document.body.classList.remove("noscroll"); return; }
     const r = e.target.closest(".perf-row[data-a]"); if (!r) return;
-    F.area = r.dataset.a; F.sub = r.dataset.s; F.st = "all"; F.lvl = "all"; saveF(); page = 0; o.remove(); document.body.classList.remove("noscroll"); renderList(true); });
+    F.area = r.dataset.a; F.sub = r.dataset.s; F.st = "all"; F.lvl = "all"; F.og = "all"; saveF(); page = 0; o.remove(); document.body.classList.remove("noscroll"); renderList(true); });
   document.body.appendChild(o); document.body.classList.add("noscroll"); o.querySelector("#perf-x").focus();
 }
 document.getElementById("perf-btn").addEventListener("click", openPerf);
@@ -705,7 +755,7 @@ let armed = false;
 document.getElementById("btn-reset").addEventListener("click", ()=>{
   const m = document.getElementById("reset-confirm");
   if (!armed) { armed = true; m.hidden = false; setTimeout(()=>{ armed=false; m.hidden=true; }, 4000); return; }
-  armed = false; m.hidden = true; S = {}; save(); page = 0; renderList(true);
+  armed = false; m.hidden = true; const keep = {}; Object.keys(S).forEach(k=>{ if (S[k] && S[k].m) keep[k] = {m:1}; }); S = keep; save(); page = 0; renderList(true);
 });
 
 let armedF = false;
@@ -714,7 +764,7 @@ document.getElementById("btn-reset-f").addEventListener("click", ()=>{
   const ids = doneInFilter(); if (!ids.length) return;
   if (!armedF) { armedF = true; m.textContent = ids.length===1 ? "Toque de novo para apagar só esta (as outras ficam)." : `Toque de novo para apagar só estas ${ids.length} (as outras ficam).`; m.hidden = false; setTimeout(()=>{ armedF=false; m.hidden=true; }, 4000); return; }
   armedF = false; m.hidden = true;
-  ids.forEach(i=>{ if (S._last === id(i)) delete S._last; delete S[id(i)]; });
+  ids.forEach(i=>{ if (S._last === id(i)) delete S._last; if (S[id(i)] && S[id(i)].m) S[id(i)] = {m:1}; else delete S[id(i)]; });
   save(); page = 0; renderList(true);
 });
 
@@ -1072,6 +1122,7 @@ function merge(local, remote){
     const L = local[k], R = out[k];
     if (!R) out[k] = L;
     else if (R.pick == null && L && L.pick != null) out[k] = L;
+    if (L && R && L.m && !out[k].m) out[k] = Object.assign({}, out[k], {m: 1});   /* marca "revisar" feita em qualquer aparelho fica */
   });
   if (!out._last && local && local._last) out._last = local._last;
   return out;
