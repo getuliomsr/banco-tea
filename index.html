@@ -1097,6 +1097,21 @@ function mockAPI(){
 /* ---------- conteúdo ---------- */
 let API, URLS = {};
 const RZT = {}, RZU = {};
+/* imagem que não carregou (link assinado vencido — app aberto há mais de 24 h — ou falha de rede): pede um link novo e tenta uma vez */
+document.addEventListener("error", async e => {
+  const im = e.target;
+  if (!(im instanceof HTMLImageElement) || im.dataset.retry || !API || !API.sign) return;
+  const m = (im.getAttribute("src") || "").match(/\/object\/sign\/conteudo\/(img\/[^?]+)/);
+  if (!m) return;
+  im.dataset.retry = "1";
+  try {
+    const p = decodeURIComponent(m[1]), u = (await API.sign([p]))[p];
+    if (!u) return;
+    URLS[p] = u;
+    const b = im.closest(".zoomimg"); if (b) b.dataset.src = u;
+    im.src = u;
+  } catch(err) {}
+}, true);
 function resumo(f){
   if (!RZT[f]) RZT[f] = API.text("resumos/" + f + ".html").then(t => t
       .replace(/src="\.\.\/(img\/[^"]+)"/g, (m, p) => 'src="' + (URLS[p] || "") + '"')
