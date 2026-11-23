@@ -755,7 +755,7 @@ let armed = false;
 document.getElementById("btn-reset").addEventListener("click", ()=>{
   const m = document.getElementById("reset-confirm");
   if (!armed) { armed = true; m.hidden = false; setTimeout(()=>{ armed=false; m.hidden=true; }, 4000); return; }
-  armed = false; m.hidden = true; const keep = {}; Object.keys(S).forEach(k=>{ if (S[k] && S[k].m) keep[k] = {m:1}; }); S = keep; save(); page = 0; renderList(true);
+  armed = false; m.hidden = true; const keep = {}; Object.keys(S).forEach(k=>{ if (S[k] && S[k].m) keep[k] = {m:1}; }); if (S._rz) keep._rz = S._rz; S = keep; save(); page = 0; renderList(true);
 });
 
 let armedF = false;
@@ -865,10 +865,10 @@ function openRS(f, sec){
 }
 function closeFull(){ document.querySelectorAll(".full").forEach(x=>x.remove()); if (!document.querySelector(".drw")) document.body.classList.remove("noscroll"); }
 let FULLF = "";
-let RZQ = "";
+let RZQ = "", RZGO = true;
 function openFull(f, sec){
   const q = RZQ; RZQ = "";
-  closeFull(); FULLF = f;
+  closeFull(); FULLF = f; RZGO = !sec && !q;
   const o = document.createElement("div"); o.className = "full"; o.setAttribute("role","dialog"); o.setAttribute("aria-label","Resumo completo");
   o.innerHTML = `<div class="loading" style="padding:24px">Carregando resumo…</div>`;
   document.body.appendChild(o); document.body.classList.add("noscroll");
@@ -907,7 +907,16 @@ function openRzRep(f, sec, title){
   });
   document.body.appendChild(o); fm.texto.focus();
 }
-window.addEventListener("message", e=>{ const m = e.data||{}; if (m.type==="resumo-close") closeFull(); if (m.type==="resumo-report" && FULLF) openRzRep(FULLF, m.sec||"", m.title||""); if (m.type==="theme-set" && m.theme) setTheme(m.theme, false); });
+window.addEventListener("message", e=>{ const m = e.data||{}; if (m.type==="resumo-close") closeFull(); if (m.type==="resumo-report" && FULLF) openRzRep(FULLF, m.sec||"", m.title||""); if (m.type==="theme-set" && m.theme) setTheme(m.theme, false);
+  /* marcador de leitura dos resumos: S._rz = {arquivo: {s: seção, i: bloco, t: quando}}, vai junto com o progresso */
+  const fr = document.querySelector(".full iframe");
+  if (fr && e.source === fr.contentWindow && typeof m.f === "string" && RESUMOS[m.f] != null) {
+    if (m.type==="resumo-marca-pede") { try { fr.contentWindow.postMessage({type:"resumo-marca-estado", f: m.f, pos: (S._rz||{})[m.f] || null, go: RZGO}, "*"); } catch(_){} RZGO = true; }
+    if (m.type==="resumo-marca") { const p = m.pos; S._rz = S._rz || {};
+      if (p && typeof p.s==="string" && p.s.length<120 && (p.i|0)===p.i) S._rz[m.f] = {s: p.s, i: p.i, t: +p.t || Date.now()}; else delete S._rz[m.f];
+      save(); }
+  }
+});
 (function(){
   const box = document.getElementById("rz-links"); box.innerHTML = "";
   document.getElementById("rz-n").textContent = "· " + RZLIST.length;
@@ -1137,6 +1146,7 @@ function merge(local, remote){
   const out = Object.assign({}, remote || {});
   Object.keys(local || {}).forEach(k => {
     if (k === "_last") return;
+    if (k === "_rz") { const o = Object.assign({}, (remote||{})._rz || {}); Object.entries(local._rz || {}).forEach(([f, v]) => { if (!o[f] || (v && +v.t > +o[f].t)) o[f] = v; }); out._rz = o; return; }
     const L = local[k], R = out[k];
     if (!R) out[k] = L;
     else if (R.pick == null && L && L.pick != null) out[k] = L;
