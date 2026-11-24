@@ -236,6 +236,13 @@ details.rz summary{cursor:pointer;padding:10px 14px;font-size:14px;font-weight:5
 details.rz[open] summary{border-bottom:1px solid var(--line)}
 .rz-grid{display:grid;gap:2px;padding:6px}
 .rz-src{font-family:var(--f-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:8px 8px 2px}
+.rz-me{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;font:inherit;font-family:var(--f-ui);font-size:15px;font-weight:600;color:var(--ink);background:var(--accent-soft);border:0;border-radius:6px;padding:10px 12px;cursor:pointer}
+.rz-me:hover{filter:brightness(.97)}
+.rz-me .nme{font-weight:400;color:var(--muted);font-size:12.5px;font-family:var(--f-mono)}
+.rz-me .chev{margin-left:auto;color:var(--muted);transition:transform .15s}
+.rz-me[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.rz-meg{display:grid;gap:2px;margin:2px 0 8px}
+.rz-meg[hidden]{display:none}
 .rz-item{display:grid;grid-template-columns:5.8em 1fr;gap:10px;align-items:baseline;text-align:left;font:inherit;font-family:var(--f-ui);font-size:14.5px;color:var(--ink);background:none;border:0;border-radius:4px;padding:8px;cursor:pointer}
 .rz-item:hover{background:var(--accent-soft)}
 .rz-item .cap{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -926,10 +933,21 @@ window.addEventListener("message", e=>{ const m = e.data||{}; if (m.type==="resu
   const byP = {}, also = {};
   RZLIST.forEach(r=>{ (byP[r[1][0]] = byP[r[1][0]] || []).push(r); r[1].slice(1).forEach(p=>{ (also[p] = also[p] || []).push(r); }); });
   const item = (cap, txt, fn)=>{ const b = document.createElement("button"); b.className = "rz-item"; b.type = "button"; b.innerHTML = `<span class="cap">${cap}</span><span>${txt}</span>`; b.onclick = fn; return b; };
-  let cur = "";
+  /* uma caixa por ME (fechada; o app lembra quais ficaram abertas neste aparelho) */
+  const ME_NOME = {ME1:"Primeiro ano", ME2:"Segundo ano", ME3:"Terceiro ano"};
+  let meAb = {}; try { meAb = JSON.parse(localStorage.getItem("rz-me-aberto")||"{}") || {}; } catch(_){}
+  const grp = {}, nRz = {};
+  const meBox = me => {
+    if (grp[me]) return grp[me];
+    const g = document.createElement("div"); g.className = "rz-meg"; g.id = "rz-meg-"+me; g.hidden = !meAb[me];
+    const h = document.createElement("button"); h.type = "button"; h.className = "rz-me"; h.setAttribute("aria-controls", g.id); h.setAttribute("aria-expanded", String(!g.hidden));
+    h.innerHTML = `<span>${me}</span><span class="nme"></span><span class="chev" aria-hidden="true">›</span>`;
+    h.onclick = ()=>{ g.hidden = !g.hidden; h.setAttribute("aria-expanded", String(!g.hidden)); meAb[me] = !g.hidden; try { localStorage.setItem("rz-me-aberto", JSON.stringify(meAb)); } catch(_){} };
+    box.append(h, g); grp[me] = g; g._h = h; nRz[me] = 0; return g;
+  };
   Object.keys(byP).map(Number).sort((a,b)=>a-b).forEach(n=>{
-    const me = meOf(n), L = byP[n];
-    if (me !== cur) { cur = me; box.appendChild(Object.assign(document.createElement("div"),{className:"rz-src",textContent:me})); }
+    const me = meOf(n), L = byP[n], box = meBox(me);
+    nRz[me] += L.length;
     if (L.length === 1) { const r = L[0]; box.appendChild(item(r[1].length>1?"Pontos "+r[1].join(" e "):"Ponto "+n, r[2], ()=>openFull(r[0],""))); return; }
     const sub = document.createElement("div"); sub.className = "rz-sub"; sub.hidden = true; sub.id = "rz-sub-"+n;
     const head = item("Ponto "+n, `${escH(PT[n]||L[0][2])}<span class="nsub">· ${L.length} subresumos</span><span class="chev" aria-hidden="true">›</span>`, ()=>{ sub.hidden = !sub.hidden; head.setAttribute("aria-expanded", String(!sub.hidden)); });
@@ -938,6 +956,7 @@ window.addEventListener("message", e=>{ const m = e.data||{}; if (m.type==="resu
     if (also[n]) { sub.appendChild(Object.assign(document.createElement("div"),{className:"rz-also",textContent:"Também neste ponto"})); also[n].forEach(r=>sub.appendChild(item("P"+r[1][0], r[2], ()=>openFull(r[0],"")))); }
     box.append(head, sub);
   });
+  Object.keys(grp).forEach(me=>{ grp[me]._h.querySelector(".nme").textContent = `${ME_NOME[me]} · ${nRz[me]} ${nRz[me]===1?"resumo":"resumos"}`; });
   const fontes = [...new Set(Q.map(q=>q.rb||"Miller's Anesthesia, 10ª ed."))];
   document.getElementById("foot").innerHTML = `<p><b>Fontes:</b> ${fontes.join(" · ")}.</p>`;
 })();
